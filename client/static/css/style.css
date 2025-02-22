@@ -59,6 +59,10 @@ body {
   touch-action: none;
 }
 
+.button:active {
+  background-color: #333;
+}
+
 .joystick-button {
   position: absolute; 
 }
