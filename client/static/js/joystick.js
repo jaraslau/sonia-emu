@@ -93,4 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return null;
     }
+  document.querySelectorAll('.button').forEach(button => {
+    button.addEventListener('click', () => {
+        const buttonId = button.getAttribute('data-id');
+        console.log(`Button ${buttonId} pressed`);
+    });
+  });
 });

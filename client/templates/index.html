@@ -7,19 +7,38 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-
     <div id="joysticks">
         <div id="left-joystick-container" class="joystick-container">
             <div class="joystick" id="left-joystick"></div>
+            <button class="button joystick-button left-north" data-id="0">0</button>
+            <button class="button joystick-button left-west" data-id="1">1</button>
+            <button class="button joystick-button left-east" data-id="2">2</button>
+            <button class="button joystick-button left-south" data-id="3">3</button>
+            <button class="button joystick-button left-special" data-id="4">4</button>
+        </div>
+
+        <div id="top-buttons">
+            <div class="button-group">
+                <button class="button l2" data-id="12">12</button>
+                <button class="button l1" data-id="13">13</button>
+            </div>
+
+            <div class="button-group">
+                <button class="button r2" data-id="10">10</button>
+                <button class="button r1" data-id="11">11</button>
+            </div>
         </div>
 
         <div id="right-joystick-container" class="joystick-container">
             <div class="joystick" id="right-joystick"></div>
+            <button class="button joystick-button right-south" data-id="5">5</button>
+            <button class="button joystick-button right-east" data-id="7">7</button>
+            <button class="button joystick-button right-west" data-id="8">8</button>
+            <button class="button joystick-button right-north" data-id="9">9</button>
+            <button class="button joystick-button right-special" data-id="6">6</button>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/joystick.js') }}"></script>
-
 </body>
 </html>
-
