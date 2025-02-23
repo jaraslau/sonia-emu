@@ -34,10 +34,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         let i = parts[1].parse::<usize>().unwrap();
         
         match parts[0] {
-            "b" => joystick.button_press(button_map(i), parts[1] == "1")?,
+            "b" => joystick.button_press(button_map(i), parts[2] == "1")?,
             "j" => {
-                let value = parts[2].parse::<i32>().unwrap();
-                joystick.move_axis(axis_map(i), value as i32 - 512)?
+                let value = parts[2].parse::<f64>().unwrap();
+                joystick.move_axis(axis_map(i), value as i32)?
             },
             _ => joystick.synchronise()?,
         }

@@ -57,8 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const normalizedX = offsetX / maxDistance;
         const normalizedY = offsetY / maxDistance;
-
-        console.log(`${joystickObj.name} Joystick:`, { x: normalizedX, y: normalizedY });
+        sendDataToBackend({ type: 'joystick', id: joystickObj.name, x: normalizedX, y: normalizedY });
     }
 
     function stopDrag(event, joystickObj) {
@@ -68,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         joystickObj.touchId = null;
         joystickObj.joystick.style.transition = 'transform 0.2s ease-out';
         joystickObj.joystick.style.transform = 'translate(-50%, -50%)';
+        sendDataToBackend({ type: 'joystick', id: joystickObj.name, x: 0, y: 0 });
     }
 
     function getRelevantTouch(event, joystickObj) {
@@ -93,10 +93,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return null;
     }
-  document.querySelectorAll('.button').forEach(button => {
-    button.addEventListener('click', () => {
-        const buttonId = button.getAttribute('data-id');
-        console.log(`Button ${buttonId} pressed`);
-    });
+
+    document.querySelectorAll('.button').forEach(button => {
+        button.addEventListener('touchstart', () => {
+		const buttonId = button.getAttribute('data-id');
+		sendDataToBackend({ type: 'button', id: buttonId, state: '1' });
+	});
+        button.addEventListener('touchend', () => {
+		const buttonId = button.getAttribute('data-id');
+		sendDataToBackend({ type: 'button', id: buttonId, state: '0' });
+	});
   });
+  
+  function sendDataToBackend(data) {
+    fetch('/input', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .catch(error => {
+        console.error('Error sending data to backend:', error);
+    });
+  };
 });
