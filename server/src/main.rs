@@ -1,18 +1,16 @@
 use std::{env, error};
+use std::net::TcpListener;
+use std::io::{BufRead, BufReader};
 
 mod joystick;
-mod serial;
 
 fn main() -> Result<(), Box<dyn error::Error>> {
     let args: Vec<_> = env::args().collect();
     let port = if args.len() > 1 {
         args[1].clone()
     } else {
-        "/dev/ttyUSB1".to_owned()
+        "5001".to_string()
     };
-
-    println!("Connecting to serial port at {}", port);
-    let mut serial = serial::SerialConnection::new(&port.into(), 115200)?;
 
     let joystick = joystick::Joystick::new()?;
 
@@ -21,18 +19,31 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         joystick.device_path()?.to_string_lossy()
     );
 
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port))?;
+    println!("Listening at {port}");
+
+    let (socket, addr) = listener.accept()?;
+    println!("{addr:?} connected");
+
+    let mut buffer = String::new();
+    let mut reader = BufReader::new(socket.try_clone()?);
+
     loop {
-        let button_state = serial.read_button_state()?;
-
-        for (i, &pressed) in button_state.pressed.iter().enumerate() {
-            joystick.button_press(button_map(i), pressed)?;
-        }
-
-        for (i, &value) in button_state.joysticks.iter().enumerate() {
-            joystick.move_axis(axis_map(i), value as i32 - 512)?;
+        reader.read_line(&mut buffer)?;
+        let parts: Vec<&str> = buffer.split_whitespace().collect();
+        let i = parts[1].parse::<usize>().unwrap();
+        
+        match parts[0] {
+            "b" => joystick.button_press(button_map(i), parts[1] == "1")?,
+            "j" => {
+                let value = parts[2].parse::<i32>().unwrap();
+                joystick.move_axis(axis_map(i), value as i32 - 512)?
+            },
+            _ => joystick.synchronise()?,
         }
 
         joystick.synchronise()?;
+        buffer.clear();
     }
 }
 
@@ -67,3 +78,4 @@ fn axis_map(i: usize) -> joystick::Axis {
         _ => unreachable!(),
     }
 }
+
