@@ -11,7 +11,7 @@ def process(data):
     else:
         x_id, y_id = (0, 1) if data["id"] == "Left" else (2, 3)
         x = bytes(f"j {x_id} {data['x'] * 512}\n", "utf-8")
-        y = bytes(f"j {y_id} {data['y'] * -512}\n", "utf-8")
+        y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
 @app.route("/input", methods=["POST"])
