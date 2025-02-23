@@ -1,5 +1,5 @@
-Sonia-Emu - emulate gamepad input on Linux using an Android device (POC).
+Sonia-Emu - emulate gamepad input on Linux using a mobile device (POC).
 
 This is a monorepo.
-Server code for this project is based heavily on "arduino-joystick" project by gwilymk:
+Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
