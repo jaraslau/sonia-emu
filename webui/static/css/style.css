@@ -93,6 +93,19 @@ body {
   grid-template-columns: repeat(2, 1fr); 
   gap: 5px; 
 }
+#top-special-buttons {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 40px;
+}
+
+.left-special, .right-special {
+    position: static;
+    transform: none;
+}
 
 .button-group {
   display: flex;
@@ -105,6 +118,7 @@ body {
     content: "Please rotate your device to landscape mode.";
     display: flex;
     justify-content: center;
+    text-align: center;
     align-items: center;
     position: fixed;
     top: 0;
