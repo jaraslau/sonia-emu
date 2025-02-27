@@ -1,5 +1,10 @@
 Sonia-Emu - emulate gamepad input on Linux using a mobile device (POC).
 
 This is a monorepo.
+Controller works for the most part, but there are some issues:
+1. Left and right arrow buttons are mixed up
+2. X and Y buttons are mixed up for some reason.
+I could just change their ids on the frontend, but because I don't know why this is happening in the first place, I wouldn't risk doing so as of now.
+
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick

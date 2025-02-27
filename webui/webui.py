@@ -1,9 +1,11 @@
 import socket
+import sys
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("127.0.0.1", 5001))
+port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001
+
 
 def process(data):
     if data["type"] == "button":
@@ -31,6 +33,14 @@ def index():
 
 if __name__ == "__main__":
     try:
-        app.run(host="0.0.0.0")
-    except:
+        sock.connect(("127.0.0.1", 5001))
+    except Exception as e:
+        print(f"Connection failed: {e}")
         sock.close()
+    else:
+        try:
+            app.run(host="0.0.0.0")
+        except:
+            sock.close()
+        finally:
+            sock.close()
