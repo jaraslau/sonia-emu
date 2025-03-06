@@ -1,29 +1,23 @@
-use std::{env, error};
-use std::net::TcpListener;
+use std::error;
+use std::os::unix::net::UnixListener;
 use std::io::{BufRead, BufReader};
 
 mod joystick;
 
 fn main() -> Result<(), Box<dyn error::Error>> {
-    let args: Vec<_> = env::args().collect();
-    let port = if args.len() > 1 {
-        args[1].clone()
-    } else {
-        "5001".to_string()
-    };
-
     let joystick = joystick::Joystick::new()?;
+    let path = "/tmp/sonia-emu.sock";
 
     println!(
         "Created joystick with device path {}",
         joystick.device_path()?.to_string_lossy()
     );
 
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port))?;
-    println!("Listening at {port}");
+    let _ = std::fs::remove_file(path);
+    let listener = UnixListener::bind(path)?;
 
-    let (socket, addr) = listener.accept()?;
-    println!("{addr:?} connected");
+    let (socket, _addr) = listener.accept()?;
+    println!("Client connected!");
 
     let mut buffer = String::new();
     let mut reader = BufReader::new(socket.try_clone()?);
@@ -78,4 +72,3 @@ fn axis_map(i: usize) -> joystick::Axis {
         _ => unreachable!(),
     }
 }
-

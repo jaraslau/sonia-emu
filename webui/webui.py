@@ -3,9 +3,8 @@ import sys
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-port = int(sys.argv[1]) if len(sys.argv) > 1 else 5001
 
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
 def process(data):
     if data["type"] == "button":
@@ -33,7 +32,7 @@ def index():
 
 if __name__ == "__main__":
     try:
-        sock.connect(("127.0.0.1", 5001))
+        sock.connect("/tmp/sonia-emu.sock")
     except Exception as e:
         print(f"Connection failed: {e}")
         sock.close()
