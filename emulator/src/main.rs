@@ -58,6 +58,8 @@ fn button_map(i: usize) -> joystick::Button {
         11 => R1,
         12 => L2,
         13 => L1,
+        14 => R3,
+        15 => L3,
         _ => unreachable!(),
     }
 }

@@ -113,6 +113,34 @@ body {
   gap: 5px; 
 }
 
+.corner-button {
+    position: absolute;
+}
+
+.left-corner {
+    top: 0;
+    left: 0;
+}
+
+.right-corner {
+    top: 0;
+    right: 0;
+}
+
+.corner-button {
+    position: fixed;
+}
+
+.left-corner {
+    top: 10px;
+    left: 10px;
+}
+
+.right-corner {
+    top: 10px;
+    right: 10px;
+}
+
 @media screen and (orientation: portrait) {
   body::before {
     content: "Please rotate your device to landscape mode.";

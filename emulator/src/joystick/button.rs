@@ -20,6 +20,8 @@ pub enum Button {
     R1,
     L2,
     R2,
+    L3,
+    R3,
 }
 
 impl Button {
@@ -46,6 +48,8 @@ impl Button {
             R1 => ButtonTR,
             L2 => ButtonTL2,
             R2 => ButtonTR2,
+            L3 => ButtonThumbl,
+            R3 => ButtonThumbr,
         }
     }
 
@@ -66,6 +70,8 @@ impl Button {
             R1,
             L2,
             R2,
+            L3,
+            R3,
         ]
         .iter()
     }
