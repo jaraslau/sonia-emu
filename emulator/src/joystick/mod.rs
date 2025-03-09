@@ -100,7 +100,7 @@ fn create_joystick_device() -> Result<input_linux::UInputHandle<fs::File>, Error
 
     device.create(
         &input_id,
-        b"arduino-virtual-joystick",
+        b"sonia-emu",
         0,
         &Axis::all_axes()
             .map(|axis| input_linux::AbsoluteInfoSetup {
