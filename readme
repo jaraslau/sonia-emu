@@ -5,3 +5,11 @@ Controller works for the most part, but as of now the controls can be janky.
 
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
+
+If the Steam controls are mixed up:
+    Go to steam settings
+    Go to "Controller"
+    Click on "Begin Test" in "Test Device Inputs"
+    Click "Setup Device Inputs"
+    Set your inputs up
+    Enable Steam Input for generic controllers
