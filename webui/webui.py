@@ -43,3 +43,10 @@ if __name__ == "__main__":
             sock.close()
         finally:
             sock.close()
+else:
+    try:
+        sock.connect("/tmp/sonia-emu.sock")
+    except Exception as e:
+        print(f"Connection failed: {e}")
+        sock.close()
+
