@@ -106,6 +106,4 @@ document.addEventListener('DOMContentLoaded', () => {
 		socket.send(JSON.stringify({ type: 'button', id: buttonId, state: '0' }));
 	});
   });
-    });
-  };
 });
