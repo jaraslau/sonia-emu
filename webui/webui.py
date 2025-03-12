@@ -1,8 +1,11 @@
 import socket
 import sys
+import json
+from flask_sock import Sock
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
+ws = Sock(app)
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
@@ -15,16 +18,15 @@ def process(data):
         y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
-@app.route("/input", methods=["POST"])
-def handle_input():
-    data = request.json
-    
-    if data["type"] == "button":
-        sock.send(process(data))
-    elif data["type"] == "joystick":
-        [ sock.send(axis) for axis in process(data) ]
-
-    return jsonify({"status": "success", "message": "Data received"})
+@ws.route("/input")
+def handle_input(ws):
+    while True:
+        response = ws.receive()
+        data = json.loads(response)
+        if data["type"] == "button":
+            sock.send(process(data))
+        elif data["type"] == "joystick":
+            [ sock.send(axis) for axis in process(data) ]
 
 @app.route("/", methods=["GET"])
 def index():
