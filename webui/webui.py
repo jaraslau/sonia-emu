@@ -8,6 +8,11 @@ app = Flask(__name__)
 ws = Sock(app)
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+try:
+    sock.connect("/tmp/sonia-emu.sock")
+except Exception as e:
+    print(f"Connection failed: {e}")
+    sock.close()
 
 def process(data):
     if data["type"] == "button":
@@ -18,37 +23,34 @@ def process(data):
         y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
+def send_events(data):
+    if data["type"] == "button":
+        sock.send(process(data))
+    elif data["type"] == "joystick":
+        [ sock.send(axis) for axis in process(data) ]
+
+@app.route("/fallback", methods=["POST"])
+def handle_fetch():
+    data = request.json
+    send_events(data)
+    return jsonify({"status": "success", "message": "Data received"})
+
 @ws.route("/input")
-def handle_input(ws):
+def handle_websocket(ws):
     while True:
         response = ws.receive()
         data = json.loads(response)
-        if data["type"] == "button":
-            sock.send(process(data))
-        elif data["type"] == "joystick":
-            [ sock.send(axis) for axis in process(data) ]
+        send_events(data)
 
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
+    print("!!! Default dev-server has unstable websocket support")
     try:
-        sock.connect("/tmp/sonia-emu.sock")
-    except Exception as e:
-        print(f"Connection failed: {e}")
+        app.run(host="0.0.0.0")
+    except:
         sock.close()
-    else:
-        try:
-            app.run(host="0.0.0.0")
-        except:
-            sock.close()
-        finally:
-            sock.close()
-else:
-    try:
-        sock.connect("/tmp/sonia-emu.sock")
-    except Exception as e:
-        print(f"Connection failed: {e}")
+    finally:
         sock.close()
-
