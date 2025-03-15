@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SoniaEmu</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
     <div id="joysticks">
@@ -43,7 +43,7 @@
         <button class="button corner-button right-corner" data-id="14">R3</button>
     </div>
 
-    <script src="{{ url_for('static', filename='js/joystick.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/wakelock.js') }}"></script>
+    <script src="{{ url_for('static', path='js/joystick.js') }}"></script>
+    <script src="{{ url_for('static', path='js/wakelock.js') }}"></script>
 </body>
 </html>

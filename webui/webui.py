@@ -1,11 +1,12 @@
 import socket
-import sys
-import json
-from flask_sock import Sock
-from flask import Flask, render_template, request, jsonify
+from fastapi import FastAPI, Request, WebSocket
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-app = Flask(__name__)
-ws = Sock(app)
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 try:
@@ -23,34 +24,27 @@ def process(data):
         y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
-def send_events(data):
+def send_data(data):
     if data["type"] == "button":
         sock.send(process(data))
     elif data["type"] == "joystick":
         [ sock.send(axis) for axis in process(data) ]
 
-@app.route("/fallback", methods=["POST"])
-def handle_fetch():
-    data = request.json
-    send_events(data)
-    return jsonify({"status": "success", "message": "Data received"})
+@app.post("/fallback")
+async def handle_fetch(request: Request):
+    data = await request.json()
+    send_data(data)
 
-@ws.route("/input")
-def handle_websocket(ws):
+    return {"status": "success", "message": "Data received"}
+
+@app.websocket("/ws")
+async def handle_websocket(websocket: WebSocket):
+    await websocket.accept()
     while True:
-        response = ws.receive()
-        data = json.loads(response)
-        send_events(data)
+        data = await websocket.receive_json()
+        send_data(data)
 
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
 
-if __name__ == "__main__":
-    print("!!! Default dev-server has unstable websocket support")
-    try:
-        app.run(host="0.0.0.0")
-    except:
-        sock.close()
-    finally:
-        sock.close()
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")

@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    const socket = new WebSocket('ws://' + location.host + '/input');
+    const socket = new WebSocket('ws://' + location.host + '/ws');
 
     joysticks.forEach((joystickObj) => {
         const { container, joystick, name } = joystickObj;
