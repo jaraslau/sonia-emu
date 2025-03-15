@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
+    const socket = new WebSocket('ws://' + location.host + '/ws');
+
     joysticks.forEach((joystickObj) => {
         const { container, joystick, name } = joystickObj;
         const containerRadius = container.offsetWidth / 2;
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const normalizedX = offsetX / maxDistance;
         const normalizedY = offsetY / maxDistance;
-        sendDataToBackend({ type: 'joystick', id: joystickObj.name, x: normalizedX, y: normalizedY });
+        sendData({ type: 'joystick', id: joystickObj.name, x: normalizedX, y: normalizedY }, socket);
     }
 
     function stopDrag(event, joystickObj) {
@@ -67,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         joystickObj.touchId = null;
         joystickObj.joystick.style.transition = 'transform 0.2s ease-out';
         joystickObj.joystick.style.transform = 'translate(-50%, -50%)';
-        sendDataToBackend({ type: 'joystick', id: joystickObj.name, x: 0, y: 0 });
+        sendData({ type: 'joystick', id: joystickObj.name, x: 0, y: 0 }, socket);
     }
 
     function getRelevantTouch(event, joystickObj) {
@@ -97,24 +99,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.button').forEach(button => {
         button.addEventListener('touchstart', () => {
 		const buttonId = button.getAttribute('data-id');
-		sendDataToBackend({ type: 'button', id: buttonId, state: '1' });
+		sendData({ type: 'button', id: buttonId, state: '1' }, socket);
 	});
         button.addEventListener('touchend', () => {
 		const buttonId = button.getAttribute('data-id');
-		sendDataToBackend({ type: 'button', id: buttonId, state: '0' });
+		sendData({ type: 'button', id: buttonId, state: '0' }, socket);
 	});
-  });
-  
-  function sendDataToBackend(data) {
-    fetch('/input', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    })
-    .catch(error => {
-        console.error('Error sending data to backend:', error);
     });
-  };
+
+    function sendData(data, ws) {
+	if (ws.readyState === WebSocket.OPEN) {
+		ws.send(JSON.stringify(data));
+	}
+	else {
+		fetch('/fallback', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(data),
+		})
+		.catch(error => {
+			console.error('Error sending data to backend:', error);
+		});
+	}
+    }
 });

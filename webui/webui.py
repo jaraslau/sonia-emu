@@ -1,10 +1,19 @@
 import socket
-import sys
-from flask import Flask, render_template, request, jsonify
+from fastapi import FastAPI, Request, WebSocket
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-app = Flask(__name__)
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+try:
+    sock.connect("/tmp/sonia-emu.sock")
+except Exception as e:
+    print(f"Connection failed: {e}")
+    sock.close()
 
 def process(data):
     if data["type"] == "button":
@@ -15,38 +24,27 @@ def process(data):
         y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
-@app.route("/input", methods=["POST"])
-def handle_input():
-    data = request.json
-    
+def send_data(data):
     if data["type"] == "button":
         sock.send(process(data))
     elif data["type"] == "joystick":
         [ sock.send(axis) for axis in process(data) ]
 
-    return jsonify({"status": "success", "message": "Data received"})
+@app.post("/fallback")
+async def handle_fetch(request: Request):
+    data = await request.json()
+    send_data(data)
 
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
+    return {"status": "success", "message": "Data received"}
 
-if __name__ == "__main__":
-    try:
-        sock.connect("/tmp/sonia-emu.sock")
-    except Exception as e:
-        print(f"Connection failed: {e}")
-        sock.close()
-    else:
-        try:
-            app.run(host="0.0.0.0")
-        except:
-            sock.close()
-        finally:
-            sock.close()
-else:
-    try:
-        sock.connect("/tmp/sonia-emu.sock")
-    except Exception as e:
-        print(f"Connection failed: {e}")
-        sock.close()
+@app.websocket("/ws")
+async def handle_websocket(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_json()
+        send_data(data)
 
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")
