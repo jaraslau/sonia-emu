@@ -13,3 +13,9 @@ If the Steam controls are mixed up:
     Click "Setup Device Inputs"
     Set your inputs up
     Enable Steam Input for generic controllers
+
+Running:
+(in an emulator directory (RUN EMULATOR FIRST))
+cargo run
+(in a webui directory)
+uvicorn --host 0.0.0.0 --port 5000 webui:app
