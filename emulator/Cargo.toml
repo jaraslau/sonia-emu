@@ -1,8 +1,8 @@
 [package]
-name = "server"
+name = "sonia-emu"
 version = "0.1.0"
 authors = ["JarasIau <jaraslau@tutanota.com>"]
 edition = "2021"
 
 [dependencies]
-input-linux = "0.3.0"
+input-linux = "0.7.1"

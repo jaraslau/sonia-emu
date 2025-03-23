@@ -15,7 +15,7 @@ except Exception as e:
     print(f"Connection failed: {e}")
     sock.close()
 
-def process(data):
+def process(data: dict) -> bytes | tuple[bytes, bytes]:
     if data["type"] == "button":
         return bytes(f"b {data['id']} {data['state']}\n", "utf-8")
     else:
@@ -24,7 +24,7 @@ def process(data):
         y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
-def send_data(data):
+def send_data(data: dict) -> None:
     if data["type"] == "button":
         sock.send(process(data))
     elif data["type"] == "joystick":
@@ -34,7 +34,6 @@ def send_data(data):
 async def handle_fetch(request: Request):
     data = await request.json()
     send_data(data)
-
     return {"status": "success", "message": "Data received"}
 
 @app.websocket("/ws")
@@ -43,7 +42,6 @@ async def handle_websocket(websocket: WebSocket):
     while True:
         data = await websocket.receive_json()
         send_data(data)
-
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
