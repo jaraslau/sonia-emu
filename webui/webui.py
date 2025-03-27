@@ -8,9 +8,11 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+sock_path = "/tmp/sonia-emu.sock"
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 try:
-    sock.connect("/tmp/sonia-emu.sock")
+    sock.connect(sock_path)
+    print(f"Connected to a socket at {sock_path}")
 except Exception as e:
     print(f"Connection failed: {e}")
     sock.close()
@@ -39,9 +41,12 @@ async def handle_fetch(request: Request):
 @app.websocket("/ws")
 async def handle_websocket(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_json()
-        send_data(data)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            send_data(data)
+    except Exception as e:
+        print(f"An error occured: {e}")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):

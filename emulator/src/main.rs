@@ -1,4 +1,4 @@
-use std::error;
+use std::{env, error};
 use std::os::unix::net::UnixListener;
 use std::io::{BufRead, BufReader};
 
@@ -6,15 +6,21 @@ mod joystick;
 
 fn main() -> Result<(), Box<dyn error::Error>> {
     let joystick = joystick::Joystick::new()?;
-    let path = "/tmp/sonia-emu.sock";
+    let args: Vec<_> = env::args().collect();
+    let path = if args.len() > 1 {
+        args[1].clone()
+    } else {
+        "/tmp/sonia-emu.sock".to_owned()
+    };
 
     println!(
         "Created joystick with device path {}",
         joystick.device_path()?.to_string_lossy()
     );
 
-    let _ = std::fs::remove_file(path);
-    let listener = UnixListener::bind(path)?;
+    let _ = std::fs::remove_file(&path);
+    let listener = UnixListener::bind(&path)?;
+    println!("Listening at {}", &path);
 
     let (socket, _addr) = listener.accept()?;
     println!("Client connected!");
