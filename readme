@@ -16,6 +16,6 @@ If the Steam controls are mixed up:
 
 Running:
 (in an emulator directory (RUN EMULATOR FIRST))
-cargo run
+cargo run <optionally - a custom path to a unix socket>
 (in a webui directory)
-uvicorn --host 0.0.0.0 --port 5000 webui:app
+python run.py <optional arguments>

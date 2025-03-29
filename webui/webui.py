@@ -8,14 +8,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-sock_path = "/tmp/sonia-emu.sock"
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-try:
-    sock.connect(sock_path)
-    print(f"Connected to a socket at {sock_path}")
-except Exception as e:
-    print(f"Connection failed: {e}")
-    sock.close()
 
 def process(data: dict) -> bytes | tuple[bytes, bytes]:
     if data["type"] == "button":
