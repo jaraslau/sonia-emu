@@ -99,7 +99,11 @@ body {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 40px;
+    gap: 20px;
+}
+
+.guide {
+    transform: translateY(-30%);
 }
 
 .left-special, .right-special {

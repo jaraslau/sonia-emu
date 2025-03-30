@@ -22,6 +22,8 @@ pub enum Button {
     R2,
     L3,
     R3,
+
+    Guide,
 }
 
 impl Button {
@@ -50,6 +52,8 @@ impl Button {
             R2 => ButtonTR2,
             L3 => ButtonThumbl,
             R3 => ButtonThumbr,
+
+            Guide => ButtonMode,
         }
     }
 
@@ -72,6 +76,7 @@ impl Button {
             R2,
             L3,
             R3,
+            Guide,
         ]
         .iter()
     }
