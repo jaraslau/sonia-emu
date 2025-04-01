@@ -3,7 +3,7 @@ import uvicorn
 from webui import sock, app
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Sonia-EMU WebUI", epilog="This software is licensed under MIT license", add_help=False)
+    parser = argparse.ArgumentParser(description="SoniaEmu WebUI", epilog="This software is licensed under MIT license", add_help=False)
     parser.add_argument("-p", "--port", type=int, default=5000, help="port on which webui is hosted")
     parser.add_argument("-h", "--host", type=str, default="0.0.0.0", help="address to host on")
     parser.add_argument("-s", "--socket", type=str, default="/tmp/sonia-emu.sock", help="path to a Unix Socket")

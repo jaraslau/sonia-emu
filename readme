@@ -1,7 +1,7 @@
-Sonia-Emu - emulate gamepad input on Linux using a mobile device (POC).
+SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
 
 This is a monorepo.
-Controller works for the most part, but as of now the controls can be janky.
+For better visibility, install WebUI as a PWA.
 
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
@@ -19,3 +19,7 @@ Running:
 cargo run <optionally - a custom path to a unix socket>
 (in a webui directory)
 python run.py <optional arguments>
+
+Installing WebUI as a PWA:
+Safari: "Share button" -> "Add to Home Screen"
+Chrome: "Menu button" -> "Add to Home Screen"
