@@ -1,4 +1,5 @@
 import socket
+import asyncio
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +10,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+sock.setblocking(False)
 
 def process(data: dict) -> bytes | tuple[bytes, bytes]:
     if data["type"] == "button":
@@ -19,16 +21,18 @@ def process(data: dict) -> bytes | tuple[bytes, bytes]:
         y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
         return (x, y)
 
-def send_data(data: dict) -> None:
+async def send_data(data: dict, sock) -> None:
+    loop = asyncio.get_running_loop()
     if data["type"] == "button":
-        sock.send(process(data))
+        await loop.sock_sendall(sock, process(data))
     elif data["type"] == "joystick":
-        [ sock.send(axis) for axis in process(data) ]
+        tasks = [loop.sock_sendall(sock, axis) for axis in process(data)]
+        await asyncio.gather(*tasks)
 
 @app.post("/fallback")
 async def handle_fetch(request: Request):
     data = await request.json()
-    send_data(data)
+    await send_data(data, sock)
     return {"status": "success", "message": "Data received"}
 
 @app.websocket("/ws")
@@ -37,7 +41,7 @@ async def handle_websocket(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_json()
-            send_data(data)
+            await send_data(data, sock)
     except Exception as e:
         print(f"An error occured: {e}")
 
