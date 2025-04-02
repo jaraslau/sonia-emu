@@ -23,3 +23,7 @@ python run.py <optional arguments>
 Installing WebUI as a PWA:
 Safari: "Share button" -> "Add to Home Screen"
 Chrome: "Menu button" -> "Add to Home Screen"
+
+Internal data format:
+Button: "b <id> <state>"
+Joystick: "j <id> <value>"
