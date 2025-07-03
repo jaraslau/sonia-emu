@@ -30,6 +30,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     loop {
         reader.read_line(&mut buffer)?;
+        if buffer.is_empty() {
+            println!("Empty buffer! Exiting...");
+            break Ok(());
+        }
+
         let parts: Vec<&str> = buffer.split_whitespace().collect();
         let i = parts[1].parse::<usize>().unwrap();
         
