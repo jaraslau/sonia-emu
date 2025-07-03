@@ -27,3 +27,7 @@ Chrome: "Menu button" -> "Add to Home Screen"
 Internal data format:
 Button: "b <id> <state>"
 Joystick: "j <id> <value>"
+
+In order to fix controls being mixed up in The Binding of Isaac:
+Use any other version of Proton but Experimental.
+Enable Steam Input.
