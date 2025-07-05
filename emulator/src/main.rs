@@ -83,6 +83,8 @@ fn axis_map(i: usize) -> joystick::Axis {
         1 => Y,
         2 => RX,
         3 => RY,
+        4 => Z,
+        5 => RZ,
         _ => unreachable!(),
     }
 }

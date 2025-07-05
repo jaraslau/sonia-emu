@@ -6,6 +6,8 @@ pub enum Axis {
     Y,
     RX,
     RY,
+    Z,
+    RZ,
 }
 
 impl Axis {
@@ -17,11 +19,13 @@ impl Axis {
             Y => input_linux::AbsoluteAxis::Y,
             RX => input_linux::AbsoluteAxis::RX,
             RY => input_linux::AbsoluteAxis::RY,
+            Z => input_linux::AbsoluteAxis::Z,
+            RZ => input_linux::AbsoluteAxis::RZ,
         }
     }
 
     pub(super) fn all_axes() -> slice::Iter<'static, Self> {
         use Axis::*;
-        [X, Y, RX, RY].iter()
+        [X, Y, RX, RY, Z, RZ].iter()
     }
 }
