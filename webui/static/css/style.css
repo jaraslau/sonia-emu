@@ -80,7 +80,7 @@ body {
 
 #top-buttons {
   position: absolute;
-  top: -10%; 
+  top: 10%; 
   left: 50%;
   transform: translateX(-50%);
   display: grid;
