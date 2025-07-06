@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupTriggerSlider(slider) {
 	    const thumb = slider.querySelector('.trigger-thumb');
 	    const dataId = slider.dataset.id;
+	    let activeTouchId = null;
 	    let sliderRect = null;
 	    let isDragging = false;
 	    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
@@ -110,40 +111,51 @@ document.addEventListener('DOMContentLoaded', () => {
 	    sendData({ type: 'trigger', id: dataId, z: pressure }, socket);
 	};
 
-	const endDrag = () => {
-	    isDragging = false;
-	    thumb.style.transition = 'bottom 0.2s ease-out';
-	    thumb.style.bottom = `0px`;
-	    sendData({ type: 'trigger', id: dataId, z: -1 }, socket);
+	const endDrag = (e) => {
+	    for (const touch of e.changedTouches) {
+		    if (touch.identifier === activeTouchId) {
+			    activeTouchId = null;
+			    thumb.style.transition = 'bottom 0.2s ease-out';
+			    thumb.style.bottom = `0px`;
+			    sendData({ type: 'trigger', id: dataId, z: -1 }, socket);
+			    
+			    document.removeEventListener('mousemove', onMove);
+			    document.removeEventListener('mouseup', endDrag);
+			    document.removeEventListener('touchmove', onMove);
+			    document.removeEventListener('touchend', endDrag);
 
-	    document.removeEventListener('mousemove', onMove);
-	    document.removeEventListener('mouseup', endDrag);
-	    document.removeEventListener('touchmove', onMove);
-	    document.removeEventListener('touchend', endDrag);
+			    setTimeout(() => {
+				    thumb.style.transition = '';
+			    }, 200);
 
-	    setTimeout(() => {
-	        thumb.style.transition = '';
-	    }, 200);
+			    break;
+		    }
+	    }
 	};
 
 	const onMove = (e) => {
-	    if (!isDragging) return;
-	    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-	    updateThumbPosition(clientY);
+	    if (activeTouchId === null) return;
+	    for (const touch of e.changedTouches) {
+		    if (touch.identifier === activeTouchId) {
+			    updateThumbPosition(touch.clientY);
+			    break;
+		    }
+	    }
 	};
 
 	const startDrag = (e) => {
-	    e.preventDefault();
+	    if (activeTouchId !== null) return;
+	    const touch = e.changedTouches[0];
+	    activeTouchId = touch.identifier;
 	    sliderRect = slider.getBoundingClientRect();
-	    isDragging = true;
 
-	    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-	    updateThumbPosition(clientY);
+	    updateThumbPosition(touch.clientY);
 
 	    document.addEventListener('mousemove', onMove);
 	    document.addEventListener('mouseup', endDrag);
 	    document.addEventListener('touchmove', onMove, { passive: false });
 	    document.addEventListener('touchend', endDrag);
+	    document.addEventListener('touchcancel', endDrag);
 	};
 
 	slider.addEventListener('mousedown', startDrag);
