@@ -15,6 +15,8 @@ sock.setblocking(False)
 def process(data: dict) -> bytes | tuple[bytes, bytes]:
     if data["type"] == "button":
         return bytes(f"b {data['id']} {data['state']}\n", "utf-8")
+    elif data["type"] == "trigger":
+        return bytes(f"j {data['id']} {data['z'] * 512}\n", "utf-8")
     else:
         x_id, y_id = (0, 1) if data["id"] == "Left" else (2, 3)
         x = bytes(f"j {x_id} {data['x'] * 512}\n", "utf-8")
@@ -24,6 +26,8 @@ def process(data: dict) -> bytes | tuple[bytes, bytes]:
 async def send_data(data: dict, sock) -> None:
     loop = asyncio.get_running_loop()
     if data["type"] == "button":
+        await loop.sock_sendall(sock, process(data))
+    elif data["type"] == "trigger":
         await loop.sock_sendall(sock, process(data))
     elif data["type"] == "joystick":
         tasks = [loop.sock_sendall(sock, axis) for axis in process(data)]

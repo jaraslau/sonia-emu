@@ -80,13 +80,14 @@ body {
 
 #top-buttons {
   position: absolute;
-  top: 10%; 
+  top: -10%; 
   left: 50%;
   transform: translateX(-50%);
   display: grid;
   grid-template-columns: repeat(2, 1fr); 
   gap: 5px; 
 }
+
 #top-special-buttons {
     position: absolute;
     bottom: 5%;
@@ -137,6 +138,35 @@ body {
 .right-corner {
     top: 10px;
     right: 10px;
+}
+
+.trigger-group {
+  align-items: flex-end;
+}
+
+.trigger-slider {
+  width: 40px;
+  height: 100px;
+  background: #444;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  position: relative;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.trigger-thumb {
+  width: 100%;
+  height: 20px;
+  background-color: #ccc;
+  border-top: 2px solid #fff;
+  cursor: pointer;
+  position: absolute;
+  bottom: 0;
+  transition: background 0.1s;
 }
 
 html {

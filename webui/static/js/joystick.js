@@ -95,6 +95,63 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return null;
     }
+    function setupTriggerSlider(slider) {
+	    const thumb = slider.querySelector('.trigger-thumb');
+	    const dataId = slider.dataset.id;
+	    let sliderRect = null;
+	    let isDragging = false;
+	    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+	    const updateThumbPosition = (clientY) => {
+		    const offset = clamp(clientY - sliderRect.top, 0, sliderRect.height);
+	    const pressure = (1 - offset / sliderRect.height) * 2 - 1;
+	    const clampedBottom = ((pressure + 1) / 2) * sliderRect.height;
+
+	    thumb.style.bottom = `${clampedBottom}px`;
+	    sendData({ type: 'trigger', id: dataId, z: pressure }, socket);
+	};
+
+	const endDrag = () => {
+	    isDragging = false;
+	    thumb.style.transition = 'bottom 0.2s ease-out';
+	    thumb.style.bottom = `0px`;
+	    sendData({ type: 'trigger', id: dataId, z: -1 }, socket);
+
+	    document.removeEventListener('mousemove', onMove);
+	    document.removeEventListener('mouseup', endDrag);
+	    document.removeEventListener('touchmove', onMove);
+	    document.removeEventListener('touchend', endDrag);
+
+	    setTimeout(() => {
+	        thumb.style.transition = '';
+	    }, 200);
+	};
+
+	const onMove = (e) => {
+	    if (!isDragging) return;
+	    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+	    updateThumbPosition(clientY);
+	};
+
+	const startDrag = (e) => {
+	    e.preventDefault();
+	    sliderRect = slider.getBoundingClientRect();
+	    isDragging = true;
+
+	    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+	    updateThumbPosition(clientY);
+
+	    document.addEventListener('mousemove', onMove);
+	    document.addEventListener('mouseup', endDrag);
+	    document.addEventListener('touchmove', onMove, { passive: false });
+	    document.addEventListener('touchend', endDrag);
+	};
+
+	slider.addEventListener('mousedown', startDrag);
+	slider.addEventListener('touchstart', startDrag, { passive: false });
+    }
+
+
+    document.querySelectorAll('.trigger-slider').forEach(setupTriggerSlider);
 
     document.querySelectorAll('.button').forEach(button => {
         button.addEventListener('touchstart', () => {
