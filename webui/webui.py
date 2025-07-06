@@ -12,25 +12,22 @@ templates = Jinja2Templates(directory="templates")
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 sock.setblocking(False)
 
-def process(data: dict) -> bytes | tuple[bytes, bytes]:
-    if data["type"] == "button":
-        return bytes(f"b {data['id']} {data['state']}\n", "utf-8")
-    elif data["type"] == "trigger":
-        return bytes(f"j {data['id']} {data['z'] * 512}\n", "utf-8")
-    else:
-        x_id, y_id = (0, 1) if data["id"] == "Left" else (2, 3)
-        x = bytes(f"j {x_id} {data['x'] * 512}\n", "utf-8")
-        y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
-        return (x, y)
+def process_axes(data: dict) -> bytes | tuple[bytes, bytes]:
+    x_id, y_id = (0, 1) if data["id"] == "Left" else (2, 3)
+    x = bytes(f"j {x_id} {data['x'] * 512}\n", "utf-8")
+    y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
+    return (x, y)
 
 async def send_data(data: dict, sock) -> None:
     loop = asyncio.get_running_loop()
     if data["type"] == "button":
-        await loop.sock_sendall(sock, process(data))
+        processed = bytes(f"b {data['id']} {data['state']}\n", "utf-8")
+        await loop.sock_sendall(sock, processed)
     elif data["type"] == "trigger":
-        await loop.sock_sendall(sock, process(data))
+        processed = bytes(f"j {data['id']} {data['z'] * 512}\n", "utf-8")
+        await loop.sock_sendall(sock, processed)
     elif data["type"] == "joystick":
-        tasks = [loop.sock_sendall(sock, axis) for axis in process(data)]
+        tasks = [loop.sock_sendall(sock, axis) for axis in process_axes(data)]
         await asyncio.gather(*tasks)
 
 @app.post("/fallback")
