@@ -89,21 +89,21 @@ body {
 }
 
 #top-special-buttons {
-    position: absolute;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
 }
 
 .guide {
-    transform: translateY(-30%);
+  transform: translateY(-30%);
 }
 
 .left-special, .right-special {
-    position: static;
-    transform: none;
+  position: static;
+  transform: none;
 }
 
 .button-group {
@@ -113,31 +113,31 @@ body {
 }
 
 .corner-button {
-    position: absolute;
+  position: absolute;
 }
 
 .left-corner {
-    top: 0;
-    left: 0;
+  top: 0;
+  left: 0;
 }
 
 .right-corner {
-    top: 0;
-    right: 0;
+  top: 0;
+  right: 0;
 }
 
 .corner-button {
-    position: fixed;
+  position: fixed;
 }
 
 .left-corner {
-    top: 10px;
-    left: 10px;
+  top: 10px;
+  left: 10px;
 }
 
 .right-corner {
-    top: 10px;
-    right: 10px;
+  top: 10px;
+  right: 10px;
 }
 
 .trigger-group {
@@ -169,28 +169,33 @@ body {
   transition: background 0.1s;
 }
 
+#orientation-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #333;
+  color: #fff;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  z-index: 1000;
+}
+
 html {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 @media screen and (orientation: portrait) {
-  body::before {
-    content: "Please rotate your device to landscape mode.";
+  #joysticks {
+    display: none;
+  }
+  #orientation-overlay {
     display: flex;
-    justify-content: center;
-    text-align: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #333;
-    color: #fff;
-    font-size: 24px;
-    z-index: 1000;
   }
 }

@@ -119,8 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			    thumb.style.bottom = `0px`;
 			    sendData({ type: 'trigger', id: dataId, z: -1 }, socket);
 			    
-			    document.removeEventListener('mousemove', onMove);
-			    document.removeEventListener('mouseup', endDrag);
 			    document.removeEventListener('touchmove', onMove);
 			    document.removeEventListener('touchend', endDrag);
 
@@ -151,14 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	    updateThumbPosition(touch.clientY);
 
-	    document.addEventListener('mousemove', onMove);
-	    document.addEventListener('mouseup', endDrag);
 	    document.addEventListener('touchmove', onMove, { passive: false });
 	    document.addEventListener('touchend', endDrag);
 	    document.addEventListener('touchcancel', endDrag);
 	};
 
-	slider.addEventListener('mousedown', startDrag);
 	slider.addEventListener('touchstart', startDrag, { passive: false });
     }
 
