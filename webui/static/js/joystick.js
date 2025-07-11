@@ -101,11 +101,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.button').forEach(button => {
         button.addEventListener('touchstart', () => {
 		const buttonId = button.getAttribute('data-id');
-		sendData({ type: 'button', id: buttonId, state: '1' }, socket);
+		const isTrigger = button.textContent === 'L2' || button.textContent === 'R2';
+		if (isTrigger) {
+			sendData({ type: 'trigger', id: buttonId, z: 1 }, socket);
+		} else {
+			sendData({ type: 'button', id: buttonId, state: '1' }, socket);
+		}
 	});
         button.addEventListener('touchend', () => {
 		const buttonId = button.getAttribute('data-id');
-		sendData({ type: 'button', id: buttonId, state: '0' }, socket);
+		const isTrigger = button.textContent === 'L2' || button.textContent === 'R2';
+		if (isTrigger) {
+			sendData({ type: 'trigger', id: buttonId, z: -1 }, socket);
+		} else {
+			sendData({ type: 'button', id: buttonId, state: '0' }, socket);
+		}
 	});
     });
 
