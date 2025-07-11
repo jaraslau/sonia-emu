@@ -11,11 +11,12 @@ templates = Jinja2Templates(directory="templates")
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 sock.setblocking(False)
+axis_range = 512
 
 def process_axes(data: dict) -> bytes | tuple[bytes, bytes]:
     x_id, y_id = (0, 1) if data["id"] == "Left" else (2, 3)
-    x = bytes(f"j {x_id} {data['x'] * 512}\n", "utf-8")
-    y = bytes(f"j {y_id} {data['y'] * 512}\n", "utf-8")
+    x = bytes(f"j {x_id} {data['x'] * axis_range}\n", "utf-8")
+    y = bytes(f"j {y_id} {data['y'] * axis_range}\n", "utf-8")
     return (x, y)
 
 async def send_data(data: dict, sock) -> None:
@@ -24,7 +25,7 @@ async def send_data(data: dict, sock) -> None:
         processed = bytes(f"b {data['id']} {data['state']}\n", "utf-8")
         await loop.sock_sendall(sock, processed)
     elif data["type"] == "trigger":
-        processed = bytes(f"j {data['id']} {data['z'] * 512}\n", "utf-8")
+        processed = bytes(f"j {data['id']} {data['z'] * axis_range}\n", "utf-8")
         await loop.sock_sendall(sock, processed)
     elif data["type"] == "joystick":
         tasks = [loop.sock_sendall(sock, axis) for axis in process_axes(data)]
