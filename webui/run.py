@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import uvicorn
-from webui import sock, app
+from webui import sock
 
 def get_args():
     parser = argparse.ArgumentParser(description="SoniaEmu WebUI", epilog="This software is licensed under MIT license", add_help=False)
