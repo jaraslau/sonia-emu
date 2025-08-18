@@ -31,3 +31,14 @@ Joystick: "j <id> <value>"
 In order to fix controls being mixed up in The Binding of Isaac:
 Use any other version of Proton but Experimental.
 Enable Steam Input.
+
+If running into issues with launching the emulator (permission denied):
+Try adding yourself to the input group,
+If this doesn't work, create a custom uinput rule:
+In "/etc/udev/rules.d/99-uinput.rules" :
+KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+After that, reload the rules:
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=input
+If the issue persists, try deleting your existing uinput device and recreating it with:
+sudo modprobe uinput

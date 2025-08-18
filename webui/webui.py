@@ -45,7 +45,7 @@ async def handle_websocket(websocket: WebSocket):
             data = await websocket.receive_json()
             await send_data(data, sock)
     except Exception as e:
-        print(f"An error occured: {e}")
+        print(f"An error occurred: {e}")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
