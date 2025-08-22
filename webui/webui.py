@@ -11,31 +11,40 @@ templates = Jinja2Templates(directory="templates")
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 sock.setblocking(False)
-axis_range = 512
 
-def process_axes(data: dict) -> bytes | tuple[bytes, bytes]:
-    x_id, y_id = (0, 1) if data["id"] == "Left" else (2, 3)
-    x = bytes(f"j {x_id} {data['x'] * axis_range}\n", "utf-8")
-    y = bytes(f"j {y_id} {data['y'] * axis_range}\n", "utf-8")
-    return (x, y)
+AXIS_RANGE = 512
+BUTTON_TEMPLATE = "b {} {}\n"
+TRIGGER_TEMPLATE = "j {} {}\n"
+AXIS_MAP = {"Left": (0, 1), "Right": (2, 3)}
 
-async def send_data(data: dict, sock) -> None:
+def process_axes(data):
+    x_id, y_id = AXIS_MAP[data["id"]]
+    x_val = int(data["x"] * AXIS_RANGE)
+    y_val = int(data["y"] * AXIS_RANGE)
+    return (
+        f"j {x_id} {x_val}\n".encode(),
+        f"j {y_id} {y_val}\n".encode())
+
+async def send_data(data, sock):
     loop = asyncio.get_running_loop()
-    if data["type"] == "button":
-        processed = bytes(f"b {data['id']} {data['state']}\n", "utf-8")
-        await loop.sock_sendall(sock, processed)
-    elif data["type"] == "trigger":
-        processed = bytes(f"j {data['id']} {data['z'] * axis_range}\n", "utf-8")
-        await loop.sock_sendall(sock, processed)
-    elif data["type"] == "joystick":
-        tasks = [loop.sock_sendall(sock, axis) for axis in process_axes(data)]
-        await asyncio.gather(*tasks)
+    try:
+        if data["type"] == "button":
+            cmd = BUTTON_TEMPLATE.format(data["id"], data["state"]).encode()
+            await loop.sock_sendall(sock, cmd)
+        elif data["type"] == "trigger":
+            cmd = TRIGGER_TEMPLATE.format(data["id"], int(data["z"] * AXIS_RANGE)).encode()
+            await loop.sock_sendall(sock, cmd)
+        elif data["type"] == "joystick":
+            x_cmd, y_cmd = process_axes(data)
+            await loop.sock_sendall(sock, x_cmd + y_cmd)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 @app.post("/fallback")
 async def handle_fetch(request: Request):
     data = await request.json()
     await send_data(data, sock)
-    return {"status": "success", "message": "Data received"}
+    return {"status": "ok"}
 
 @app.websocket("/ws")
 async def handle_websocket(websocket: WebSocket):
