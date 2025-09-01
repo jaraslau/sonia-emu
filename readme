@@ -18,6 +18,7 @@ Running:
 (in an emulator directory (RUN EMULATOR FIRST))
 cargo run <optionally - a custom path to a unix socket>
 (in a webui directory)
+Create a venv and install requirements using pip or use poetry, then:
 python run.py <optional arguments>
 
 Installing WebUI as a PWA:
