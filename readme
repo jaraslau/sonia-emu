@@ -2,6 +2,7 @@ SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
 
 This is a monorepo.
 For better visibility, install WebUI as a PWA.
+The project is intended to be used on a local network, therefore lacks data validation and other, that would be crucial if to be ran over the internet.
 
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
