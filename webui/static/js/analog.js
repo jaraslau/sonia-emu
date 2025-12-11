@@ -1,82 +1,132 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const socket = new WebSocket("ws://" + location.host + "/ws");
-
-  function setupTriggerSlider(slider) {
-    const thumb = slider.querySelector(".trigger-thumb");
-    const dataId = slider.dataset.id;
-    let activeTouchId = null;
-    let sliderRect = null;
-    let isDragging = false;
-    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-    const updateThumbPosition = (clientY) => {
-      const offset = clamp(clientY - sliderRect.top, 0, sliderRect.height);
-      const pressure = (1 - offset / sliderRect.height) * 2 - 1;
-      const clampedBottom = ((pressure + 1) / 2) * sliderRect.height;
-
-      thumb.style.bottom = `${clampedBottom}px`;
-      sendData({ type: "trigger", id: dataId, z: pressure }, socket);
-    };
-
-    const endDrag = (e) => {
-      for (const touch of e.changedTouches) {
-        if (touch.identifier === activeTouchId) {
-          activeTouchId = null;
-          thumb.style.transition = "bottom 0.2s ease-out";
-          thumb.style.bottom = `0px`;
-          sendData({ type: "trigger", id: dataId, z: -1 }, socket);
-
-          document.removeEventListener("touchmove", onMove);
-          document.removeEventListener("touchend", endDrag);
-
-          setTimeout(() => {
-            thumb.style.transition = "";
-          }, 200);
-
-          break;
-        }
-      }
-    };
-
-    const onMove = (e) => {
-      if (activeTouchId === null) return;
-      for (const touch of e.changedTouches) {
-        if (touch.identifier === activeTouchId) {
-          updateThumbPosition(touch.clientY);
-          break;
-        }
-      }
-    };
-    const startDrag = (e) => {
-      if (activeTouchId !== null) return;
-      const touch = e.changedTouches[0];
-      activeTouchId = touch.identifier;
-      sliderRect = slider.getBoundingClientRect();
-
-      updateThumbPosition(touch.clientY);
-
-      document.addEventListener("touchmove", onMove, { passive: false });
-      document.addEventListener("touchend", endDrag);
-      document.addEventListener("touchcancel", endDrag);
-    };
-
-    slider.addEventListener("touchstart", startDrag, { passive: false });
+class AnalogController {
+  constructor() {
+    this.socket = null;
+    this.triggers = [];
+    this.init();
   }
 
-  function sendData(data, ws) {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
+  init() {
+    this.connectWebSocket();
+    this.initTriggers();
+  }
+
+  connectWebSocket() {
+    this.socket = new WebSocket(`ws://${location.host}/ws`);
+    
+    this.socket.onopen = () => console.log('WebSocket connected');
+    this.socket.onerror = (err) => console.error('WebSocket error:', err);
+    this.socket.onclose = () => console.log('WebSocket closed');
+  }
+
+  initTriggers() {
+    document.querySelectorAll('.trigger-slider').forEach(slider => {
+      const trigger = new TriggerSlider(slider, this);
+      this.triggers.push(trigger);
+    });
+  }
+
+  send(data) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(data));
     } else {
-      fetch("/fallback", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }).catch((error) => {
-        console.error("Error sending data to backend:", error);
-      });
+      fetch('/fallback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).catch(err => console.error('Fallback error:', err));
+    }
+  }
+}
+
+class TriggerSlider {
+  constructor(element, controller) {
+    this.slider = element;
+    this.thumb = element.querySelector('.trigger-thumb');
+    this.id = element.dataset.id;
+    this.controller = controller;
+    this.touchId = null;
+    this.rect = null;
+    
+    this.attachListeners();
+  }
+
+  attachListeners() {
+    this.slider.addEventListener('touchstart', (e) => this.start(e), { passive: false });
+  }
+
+  start(e) {
+    if (this.touchId !== null) return;
+
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    this.touchId = touch.identifier;
+    this.rect = this.slider.getBoundingClientRect();
+    
+    this.updatePosition(touch.clientY);
+    
+    document.addEventListener('touchmove', this.moveHandler = (e) => this.move(e), { passive: false });
+    document.addEventListener('touchend', this.endHandler = (e) => this.end(e));
+    document.addEventListener('touchcancel', this.endHandler);
+  }
+
+  move(e) {
+    if (this.touchId === null) return;
+
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === this.touchId) {
+        this.updatePosition(touch.clientY);
+        break;
+      }
     }
   }
 
-  document.querySelectorAll(".trigger-slider").forEach(setupTriggerSlider);
+  end(e) {
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === this.touchId) {
+        this.touchId = null;
+        this.reset();
+        
+        document.removeEventListener('touchmove', this.moveHandler);
+        document.removeEventListener('touchend', this.endHandler);
+        document.removeEventListener('touchcancel', this.endHandler);
+        break;
+      }
+    }
+  }
+
+  updatePosition(clientY) {
+    const offset = this.clamp(clientY - this.rect.top, 0, this.rect.height);
+    const pressure = (1 - offset / this.rect.height) * 2 - 1;
+    const bottomPos = ((pressure + 1) / 2) * this.rect.height;
+    
+    this.thumb.style.bottom = `${bottomPos}px`;
+    this.controller.send({
+      type: 'trigger',
+      id: this.id,
+      value: pressure
+    });
+  }
+
+  reset() {
+    this.thumb.style.transition = 'bottom 0.2s ease-out';
+    this.thumb.style.bottom = '0px';
+    
+    this.controller.send({
+      type: 'trigger',
+      id: this.id,
+      value: -1
+    });
+
+    setTimeout(() => {
+      this.thumb.style.transition = '';
+    }, 200);
+  }
+
+  clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  new AnalogController();
 });
