@@ -4,12 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
       container: document.getElementById("left-joystick-container"),
       joystick: document.getElementById("left-joystick"),
       name: "Left",
+      xId: 0,
+      yId: 1,
       touchId: null,
     },
     {
       container: document.getElementById("right-joystick-container"),
       joystick: document.getElementById("right-joystick"),
       name: "Right",
+      xId: 2,
+      yId: 3,
       touchId: null,
     },
   ];
@@ -72,9 +76,16 @@ document.addEventListener("DOMContentLoaded", () => {
     sendData(
       {
         type: "joystick",
-        id: joystickObj.name,
-        x: normalizedX,
-        y: normalizedY,
+        id: joystickObj.xId,
+        value: normalizedX,
+      },
+      socket,
+    );
+    sendData(
+      {
+        type: "joystick",
+        id: joystickObj.yId,
+        value: normalizedY,
       },
       socket,
     );
@@ -87,7 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
     joystickObj.touchId = null;
     joystickObj.joystick.style.transition = "transform 0.2s ease-out";
     joystickObj.joystick.style.transform = "translate(-50%, -50%)";
-    sendData({ type: "joystick", id: joystickObj.name, x: 0, y: 0 }, socket);
+    sendData({ type: "joystick", id: joystickObj.xId, value: 0 }, socket);
+    sendData({ type: "joystick", id: joystickObj.yId, value: 0, }, socket);
   }
 
   function getRelevantTouch(event, joystickObj) {
@@ -120,9 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const isTrigger =
         button.textContent === "L2" || button.textContent === "R2";
       if (isTrigger) {
-        sendData({ type: "trigger", id: buttonId, z: 1 }, socket);
+        sendData({ type: "trigger", id: buttonId, value: 1 }, socket);
       } else {
-        sendData({ type: "button", id: buttonId, state: "1" }, socket);
+        sendData({ type: "button", id: buttonId, value: 1 }, socket);
       }
     });
     button.addEventListener("touchend", () => {
@@ -130,9 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const isTrigger =
         button.textContent === "L2" || button.textContent === "R2";
       if (isTrigger) {
-        sendData({ type: "trigger", id: buttonId, z: -1 }, socket);
+        sendData({ type: "trigger", id: buttonId, value: -1 }, socket);
       } else {
-        sendData({ type: "button", id: buttonId, state: "0" }, socket);
+        sendData({ type: "button", id: buttonId, value: 0 }, socket);
       }
     });
   });

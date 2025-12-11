@@ -1,5 +1,7 @@
 import socket
 import asyncio
+from dataclasses import dataclass
+from typing import Literal
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,31 +14,30 @@ templates = Jinja2Templates(directory="templates")
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 sock.setblocking(False)
 
-AXIS_RANGE = 512
-BUTTON_TEMPLATE = "b {} {}\n"
-TRIGGER_TEMPLATE = "j {} {}\n"
-AXIS_MAP = {"Left": (0, 1), "Right": (2, 3)}
+@dataclass
+class InputData():
+    INPUT_TEMPLATE = "{} {} {}\n"
+    AXIS_RANGE = 512
+    PREFIX_MAP = {"button": "b", "joystick": "j", "trigger": "j"}
 
-def process_axes(data):
-    x_id, y_id = AXIS_MAP[data["id"]]
-    x_val = int(data["x"] * AXIS_RANGE)
-    y_val = int(data["y"] * AXIS_RANGE)
-    return (
-        f"j {x_id} {x_val}\n".encode(),
-        f"j {y_id} {y_val}\n".encode())
+    input_type: Literal["button", "joystick", "trigger"]
+    input_id: int
+    input_value: float
+
+    def format(self) -> bytes:
+        if self.input_type != "button":
+            value = self.input_value * self.AXIS_RANGE
+        else:
+            value = self.input_value
+        prefix = self.PREFIX_MAP[self.input_type]
+        return self.INPUT_TEMPLATE.format(prefix, self.input_id, value).encode("ascii")
 
 async def send_data(data, sock):
     loop = asyncio.get_running_loop()
     try:
-        if data["type"] == "button":
-            cmd = BUTTON_TEMPLATE.format(data["id"], data["state"]).encode()
-            await loop.sock_sendall(sock, cmd)
-        elif data["type"] == "trigger":
-            cmd = TRIGGER_TEMPLATE.format(data["id"], int(data["z"] * AXIS_RANGE)).encode()
-            await loop.sock_sendall(sock, cmd)
-        elif data["type"] == "joystick":
-            x_cmd, y_cmd = process_axes(data)
-            await loop.sock_sendall(sock, x_cmd + y_cmd)
+        input_data = InputData(data["type"], data["id"], data["value"])
+        cmd = input_data.format()
+        await loop.sock_sendall(sock, cmd)
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -59,3 +60,7 @@ async def handle_websocket(websocket: WebSocket):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse(request=request, name="index.html")
+
+@app.on_event("shutdown")
+async def shutdown():
+    sock.close()
