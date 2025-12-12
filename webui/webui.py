@@ -1,22 +1,22 @@
-import socket
 import asyncio
+import orjson
+from socket import socket, AF_UNIX, SOCK_STREAM
 from dataclasses import dataclass
 from typing import Literal
-from fastapi import FastAPI, Request, WebSocket
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-app = FastAPI()
+app = FastAPI(json_loads=orjson.loads)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+sock = socket(AF_UNIX, SOCK_STREAM)
 sock.setblocking(False)
 
 @dataclass
-class InputData():
-    INPUT_TEMPLATE = "{} {} {}\n"
+class InputData:
     AXIS_RANGE = 512
     PREFIX_MAP = {"button": "b", "joystick": "j", "trigger": "j"}
 
@@ -26,18 +26,20 @@ class InputData():
 
     def format(self) -> bytes:
         if self.input_type != "button":
-            value = self.input_value * self.AXIS_RANGE
+            value = float(self.input_value) * self.AXIS_RANGE
         else:
-            value = self.input_value
+            value = float(self.input_value)
         prefix = self.PREFIX_MAP[self.input_type]
-        return self.INPUT_TEMPLATE.format(prefix, self.input_id, value).encode("ascii")
+        return b"%b %d %d\n" % (prefix.encode("ascii"), int(self.input_id), value)
 
-async def send_data(data, sock):
+async def send_data(data: dict, sock: socket) -> None:
     loop = asyncio.get_running_loop()
     try:
         input_data = InputData(data["type"], data["id"], data["value"])
         cmd = input_data.format()
         await loop.sock_sendall(sock, cmd)
+    except WebSocketDisconnect:
+        print("Websocket disconnected, running on fallback")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -52,7 +54,8 @@ async def handle_websocket(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_json()
+            raw = await websocket.receive_text()
+            data = orjson.loads(raw)
             await send_data(data, sock)
     except Exception as e:
         print(f"An error occurred: {e}")
