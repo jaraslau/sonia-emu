@@ -8,83 +8,158 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let joystick = joystick::Joystick::new()?;
     let args: Vec<_> = env::args().collect();
     let path = if args.len() > 1 {
-        args[1].clone()
+        &args[1]
     } else {
-        "/tmp/sonia-emu.sock".to_owned()
+        "/tmp/sonia-emu.sock"
     };
-
+    
     println!(
         "Created joystick with device path {}",
         joystick.device_path()?.to_string_lossy()
     );
-
-    let _ = std::fs::remove_file(&path);
-    let listener = UnixListener::bind(&path)?;
-    println!("Listening at {}", &path);
-
-    let (socket, _addr) = listener.accept()?;
-    println!("Client connected!");
-
-    let mut buffer = String::new();
-    let mut reader = BufReader::new(socket.try_clone()?);
-
+    
+    let _ = std::fs::remove_file(path);
+    let listener = UnixListener::bind(path)?;
+    println!("Listening at {}", path);
+    
     loop {
-        reader.read_line(&mut buffer)?;
-        if buffer.is_empty() {
-            println!("Empty buffer! Exiting...");
-            break Ok(());
+        match listener.accept() {
+            Ok((socket, _)) => {
+                println!("Client connected!");
+                if let Err(e) = handle_client(socket, &joystick) {
+                    eprintln!("Client error: {}", e);
+                }
+                println!("Client disconnected");
+            }
+            Err(e) => {
+                eprintln!("Accept error: {}", e);
+                break;
+            }
         }
+    }
+    
+    Ok(())
+}
 
-        let parts: Vec<&str> = buffer.split_whitespace().collect();
-        let i = parts[1].parse::<usize>().unwrap();
-        
-        match parts[0] {
-            "b" => joystick.button_press(button_map(i), parts[2] == "1")?,
-            "j" => {
-                let value = parts[2].parse::<f64>().unwrap();
-                joystick.move_axis(axis_map(i), value as i32)?
-            },
-            _ => joystick.synchronise()?,
-        }
-
-        joystick.synchronise()?;
+#[inline]
+fn handle_client(
+    socket: std::os::unix::net::UnixStream,
+    joystick: &joystick::Joystick,
+) -> Result<(), Box<dyn error::Error>> {
+    let mut buffer = Vec::with_capacity(32);
+    let mut reader = BufReader::with_capacity(4096, socket);
+    
+    loop {
         buffer.clear();
+        let n = reader.read_until(b'\n', &mut buffer)?;
+        
+        if n == 0 {
+            break;
+        }
+        
+        if n <= 1 {
+            continue;
+        }
+        
+        let line = &buffer[..n.saturating_sub(1)];
+        
+        let mut iter = line.split(|&b| b == b' ');
+        
+        match iter.next() {
+            Some(b"b") => {
+                if let (Some(id), Some(state)) = (iter.next(), iter.next()) {
+                    if let (Some(btn_id), Some(pressed)) = (parse_u8(id), parse_u8(state)) {
+                        joystick.button_press(button_map(btn_id), pressed != 0)?;
+                    }
+                }
+            }
+            Some(b"j") => {
+                if let (Some(id), Some(value)) = (iter.next(), iter.next()) {
+                    if let (Some(axis_id), Some(pos)) = (parse_u8(id), parse_i32(value)) {
+                        joystick.move_axis(axis_map(axis_id), pos)?;
+                    }
+                }
+            }
+            _ => {}
+        }
+        
+        joystick.synchronise()?;
     }
+    
+    Ok(())
 }
 
-fn button_map(i: usize) -> joystick::Button {
+#[inline(always)]
+fn parse_u8(bytes: &[u8]) -> Option<u8> {
+    let mut result = 0u8;
+    for &b in bytes {
+        if b.is_ascii_digit() {
+            result = result.wrapping_mul(10).wrapping_add(b - b'0');
+        } else {
+            return None;
+        }
+    }
+    Some(result)
+}
+
+#[inline(always)]
+fn parse_i32(bytes: &[u8]) -> Option<i32> {
+    if bytes.is_empty() {
+        return None;
+    }
+    
+    let (negative, start) = if bytes[0] == b'-' {
+        (true, 1)
+    } else {
+        (false, 0)
+    };
+    
+    let mut result = 0i32;
+    for &b in &bytes[start..] {
+        if b.is_ascii_digit() {
+            result = result.wrapping_mul(10).wrapping_add((b - b'0') as i32);
+        } else {
+            return None;
+        }
+    }
+    
+    Some(if negative { -result } else { result })
+}
+
+static BUTTON_MAP: [joystick::Button; 17] = {
     use joystick::Button::*;
-    match i {
-        0 => LeftNorth,
-        1 => LeftEast,
-        2 => LeftWest,
-        3 => LeftSouth,
-        4 => LeftSpecial,
-        5 => RightSouth,
-        6 => RightSpecial,
-        7 => RightEast,
-        8 => RightNorth,
-        9 => RightWest,
-        10 => R2,
-        11 => R1,
-        12 => L2,
-        13 => L1,
-        14 => R3,
-        15 => L3,
-        16 => Guide,
-        _ => unreachable!(),
-    }
+    [
+        LeftNorth
+        LeftEast,
+        LeftWest
+        LeftSouth
+        LeftSpecial
+        RightSouth
+        RightSpecial
+        RightEast
+        RightNorth
+        RightWest
+        R2
+        R1
+        L2
+        L1
+        R3
+        L3
+        Guide
+    ]
+};
+
+static AXIS_MAP: [joystick::Axis; 6] = {
+    use joystick::Axis::*;
+    [X, Y, RX, RY, Z, RZ]
+};
+
+#[inline(always)]
+fn button_map(i: u8) -> joystick::Button {
+    BUTTON_MAP.get(i as usize).copied().unwrap_or(joystick::Button::Guide)
 }
 
-fn axis_map(i: usize) -> joystick::Axis {
-    use joystick::Axis::*;
-    match i {
-        0 => X,
-        1 => Y,
-        2 => RX,
-        3 => RY,
-        4 => Z,
-        5 => RZ,
-        _ => unreachable!(),
-    }
+#[inline(always)]
+fn axis_map(i: u8) -> joystick::Axis {
+    AXIS_MAP.get(i as usize).copied().unwrap_or(joystick::Axis::X)
 }

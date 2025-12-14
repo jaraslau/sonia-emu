@@ -17,16 +17,17 @@ pub struct Joystick {
 impl Joystick {
     pub fn new() -> Result<Self, Error> {
         let device = create_joystick_device()?;
-
         Ok(Joystick { device })
     }
 
+    #[inline]
     pub fn device_path(&self) -> Result<path::PathBuf, Error> {
         Ok(self.device.evdev_path()?)
     }
 
+    #[inline]
     pub fn move_axis(&self, axis: Axis, position: i32) -> Result<(), Error> {
-        if position > 512 || position < -512 {
+        if !(-512..=512).contains(&position) {
             return Err(Error::OutOfRangeError {
                 min: -512,
                 max: 512,
@@ -35,12 +36,13 @@ impl Joystick {
         }
 
         self.write_event(input_linux::AbsoluteEvent::new(
-            empty_event_time(),
+            EVENT_TIME,
             axis.to_evdev_axis(),
             position,
         ))
     }
 
+    #[inline]
     pub fn button_press(&self, button: Button, is_pressed: bool) -> Result<(), Error> {
         let value = if is_pressed {
             input_linux::KeyState::PRESSED
@@ -49,26 +51,26 @@ impl Joystick {
         };
 
         self.write_event(input_linux::KeyEvent::new(
-            empty_event_time(),
+            EVENT_TIME,
             button.to_evdev_button(),
             value,
         ))
     }
 
+    #[inline]
     pub fn synchronise(&self) -> Result<(), Error> {
-        self.write_event(input_linux::SynchronizeEvent::report(empty_event_time()))
+        self.write_event(input_linux::SynchronizeEvent::report(EVENT_TIME))
     }
 
+    #[inline(always)]
     fn write_event(&self, event: impl std::convert::AsRef<sys::input_event>) -> Result<(), Error> {
         self.device.write(&[*event.as_ref()])?;
-
         Ok(())
     }
 }
 
-fn empty_event_time() -> input_linux::EventTime {
-    input_linux::EventTime::new(0, 0)
-}
+// Const event time to avoid repeated allocations
+const EVENT_TIME: input_linux::EventTime = input_linux::EventTime::new(0, 0);
 
 fn create_joystick_device() -> Result<input_linux::UInputHandle<fs::File>, Error> {
     let uinput_file = fs::File::create("/dev/uinput")?;
@@ -81,7 +83,7 @@ fn create_joystick_device() -> Result<input_linux::UInputHandle<fs::File>, Error
         version: 1,
     };
 
-    let standard_info = input_linux::AbsoluteInfo {
+    const AXIS_INFO: input_linux::AbsoluteInfo = input_linux::AbsoluteInfo {
         value: 0,
         minimum: -512,
         maximum: 512,
@@ -92,23 +94,21 @@ fn create_joystick_device() -> Result<input_linux::UInputHandle<fs::File>, Error
 
     device.set_evbit(input_linux::EventKind::Absolute)?;
     device.set_evbit(input_linux::EventKind::Key)?;
-    device.set_keybit(input_linux::Key::ButtonTrigger)?; // informs linux that this is a joystick
+    device.set_keybit(input_linux::Key::ButtonTrigger)?;
 
     for button in Button::all_buttons() {
         device.set_keybit(button.to_evdev_button())?;
     }
 
-    device.create(
-        &input_id,
-        b"sonia-emu",
-        0,
-        &Axis::all_axes()
-            .map(|axis| input_linux::AbsoluteInfoSetup {
-                axis: axis.to_evdev_axis(),
-                info: standard_info,
-            })
-            .collect::<Vec<_>>(),
-    )?;
+    let mut axis_setups = Vec::with_capacity(6);
+    for axis in Axis::all_axes() {
+        axis_setups.push(input_linux::AbsoluteInfoSetup {
+            axis: axis.to_evdev_axis(),
+            info: AXIS_INFO,
+        });
+    }
+
+    device.create(&input_id, b"sonia-emu", 0, &axis_setups)?;
 
     Ok(device)
 }

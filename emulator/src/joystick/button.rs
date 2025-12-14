@@ -1,6 +1,6 @@
 use std::slice;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum Button {
     LeftNorth,
     LeftSouth,
@@ -27,11 +27,12 @@ pub enum Button {
 }
 
 impl Button {
+    #[inline]
     pub(super) fn to_evdev_button(&self) -> input_linux::Key {
         use input_linux::Key::*;
         use Button::*;
 
-        match &self {
+        match self {
             LeftNorth => ButtonDpadUp,
             LeftSouth => ButtonDpadDown,
             LeftEast => ButtonDpadLeft,
@@ -59,7 +60,7 @@ impl Button {
 
     pub(super) fn all_buttons() -> slice::Iter<'static, Self> {
         use Button::*;
-        [
+        const ALL: [Button; 17] = [
             LeftNorth,
             LeftSouth,
             LeftEast,
@@ -77,7 +78,7 @@ impl Button {
             L3,
             R3,
             Guide,
-        ]
-        .iter()
+        ];
+        ALL.iter()
     }
 }
