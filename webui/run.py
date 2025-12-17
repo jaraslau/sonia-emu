@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 import time
+import logging
 import sys
 import argparse
 import uvicorn
 from webui import sock
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)s %(message)s")
+logger.setLevel(logging.INFO)
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -47,29 +52,30 @@ def connect(sock_path: str, reconnect: int, max_tries: int) -> bool:
     for attempt in range(max_tries):
         try:
             sock.connect(sock_path)
-            print(f"Connected to a socket at {sock_path}")
+            logger.info(f"Connected to a socket at {sock_path}")
             return True
         except Exception as e:
-            print(f"Connection to {sock_path} failed: {e}")
+            logger.error(f"Connection to {sock_path} failed: {e}")
             sock.close()
             if reconnect > 0:
                 for i in range(reconnect):
                     print(f"Reconnecting in {reconnect - i}s", end="\r")
                     time.sleep(1)
-                print()
+                logger.info(f"Trying to recconect to {sock_path}")
             else:
                 return False
     return False
 
 def main(args):
     if sys.platform != "linux":
-        print(f"Warning! This program was written specifically for Linux. Input events won't work on {sys.platform}.")
+        logger.warning(
+            f"Warning! This program was written specifically for Linux. Input events won't work on {sys.platform}."
+        )
     if not connect(args.socket, args.reconnect, args.max_tries) and args.fail:
-        print("Failed to connect. Exiting...")
+        logger.error(f"Failed to connect to {args.socket}. Exiting...")
         return
-    else:
-        with sock:
-            uvicorn.run("webui:app", port=args.port, host=args.host, loop="uvloop")
+    with sock:
+        uvicorn.run("webui:app", port=args.port, host=args.host, loop="uvloop")
 
 if __name__ == "__main__":
     args = get_args()

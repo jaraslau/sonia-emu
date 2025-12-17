@@ -1,5 +1,6 @@
 import asyncio
 import orjson
+import logging
 from socket import socket, AF_UNIX, SOCK_STREAM
 from dataclasses import dataclass
 from typing import Literal
@@ -14,6 +15,8 @@ templates = Jinja2Templates(directory="templates")
 
 sock = socket(AF_UNIX, SOCK_STREAM)
 sock.setblocking(False)
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class InputData:
@@ -38,10 +41,8 @@ async def send_data(data: dict, sock: socket) -> None:
         input_data = InputData(data["type"], data["id"], data["value"])
         cmd = input_data.format()
         await loop.sock_sendall(sock, cmd)
-    except WebSocketDisconnect:
-        print("Websocket disconnected, running on fallback")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
 @app.post("/fallback")
 async def handle_fetch(request: Request):
@@ -57,8 +58,10 @@ async def handle_websocket(websocket: WebSocket):
             raw = await websocket.receive_text()
             data = orjson.loads(raw)
             await send_data(data, sock)
+    except WebSocketDisconnect:
+        logger.warning("Websocket disconnected, running on fallback")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
