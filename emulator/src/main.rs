@@ -129,23 +129,23 @@ fn parse_i32(bytes: &[u8]) -> Option<i32> {
 static BUTTON_MAP: [joystick::Button; 17] = {
     use joystick::Button::*;
     [
-        LeftNorth
+        LeftNorth,
         LeftEast,
-        LeftWest
-        LeftSouth
-        LeftSpecial
-        RightSouth
-        RightSpecial
-        RightEast
-        RightNorth
-        RightWest
-        R2
-        R1
-        L2
-        L1
-        R3
-        L3
-        Guide
+        LeftWest,
+        LeftSouth,
+        LeftSpecial,
+        RightSouth,
+        RightSpecial,
+        RightEast,
+        RightNorth,
+        RightWest,
+        R2,
+        R1,
+        L2,
+        L1,
+        R3,
+        L3,
+        Guide,
     ]
 };
 
