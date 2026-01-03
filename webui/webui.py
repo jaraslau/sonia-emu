@@ -2,7 +2,6 @@ import asyncio
 import orjson
 import logging
 import struct
-from socket import socket, AF_UNIX, SOCK_STREAM
 from dataclasses import dataclass
 from typing import Literal
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -14,10 +13,9 @@ app = FastAPI(json_loads=orjson.loads)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-sock = socket(AF_UNIX, SOCK_STREAM)
-sock.setblocking(False)
-
 logger = logging.getLogger(__name__)
+
+sock = None
 
 @dataclass
 class InputData:
@@ -36,14 +34,14 @@ class InputData:
         prefix = self.PREFIX_MAP[self.input_type]
         return struct.pack("!BBi", prefix[0], self.input_id, value)
 
-async def send_data(data: dict, sock: socket) -> None:
+async def send_data(data: dict, sock) -> None:
     loop = asyncio.get_running_loop()
     try:
         input_data = InputData(data["type"], int(data["id"]), data["value"])
         packet = input_data.to_bytes()
         await loop.sock_sendall(sock, packet)
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.error(e)
 
 @app.post("/fallback")
 async def handle_fetch(request: Request):
@@ -62,7 +60,7 @@ async def handle_websocket(websocket: WebSocket):
     except WebSocketDisconnect:
         logger.warning("Websocket disconnected, running on fallback")
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.error(e)
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -70,4 +68,5 @@ async def index(request: Request):
 
 @app.on_event("shutdown")
 async def shutdown():
-    sock.close()
+    if sock:
+        sock.close()
