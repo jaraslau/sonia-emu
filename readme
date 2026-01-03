@@ -2,12 +2,31 @@ SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
 
 This is a monorepo.
 For better visibility, install WebUI as a PWA.
-The project is intended to be used on a local network, therefore lacks data validation and other features, that would be crucial if to be ran over the internet.
+This project is designed for local network use only and lacks security features necessary for the over-the-internet deployment.
+
+While this project is intended to be ran and used only on Linux, WebUI can still be ran on other systems, though nothing will happen obviously.
 
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
 
-If the Steam controls are mixed up:
+Running:
+(in emulator/)
+    cargo run <optionally - a custom path to a unix socket>
+(in webui/):
+Create a venv and install requirements using pip or poetry, then:
+    python run.py <optional arguments>
+
+Installing WebUI as a PWA:
+    Safari: "Share button" -> "Add to Home Screen"
+    Chrome: "Menu button" -> "Add to Home Screen"
+
+Data format:
+    Data is being sent as a fixed-size packaged struct with three fields:
+    prefix, input_id and value
+    prefixes are "b" for buttons, and "j" for axes (joysticks and triggers).
+
+Fixes for possible issues:
+1. If the Steam controls are mixed up:
     Go to steam settings
     Go to "Controller"
     Click on "Begin Test" in "Test Device Inputs"
@@ -15,34 +34,18 @@ If the Steam controls are mixed up:
     Set your inputs up
     Enable Steam Input for generic controllers
 
-Running:
-(in an emulator directory)
-cargo run <optionally - a custom path to a unix socket>
-(in a webui directory)
-Create a venv and install requirements using pip or use poetry, then:
-python run.py <optional arguments>
+2. In order to fix controls being mixed up in The Binding of Isaac:
+    Use any other version of Proton but Experimental.
+    Enable Steam Input.
 
-Installing WebUI as a PWA:
-Safari: "Share button" -> "Add to Home Screen"
-Chrome: "Menu button" -> "Add to Home Screen"
-
-Internal data format (as of now):
-b"<char> <int> <int>\n"
-Where the first character represents data type (joystick/button), then data id and value.
-Trigger data is treated as axis data (z-axis), therefore has the same prefix as the joysticks.
-
-In order to fix controls being mixed up in The Binding of Isaac:
-Use any other version of Proton but Experimental.
-Enable Steam Input.
-
-If running into issues with launching the emulator (permission denied):
-Try adding yourself to the input group,
+3. If running into issues with launching the emulator (permission denied):
+    Try adding yourself to the input group,
 If this doesn't work, create a custom uinput rule:
-In "/etc/udev/rules.d/99-uinput.rules" :
-KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+(In "/etc/udev/rules.d/99-uinput.rules"):
+    KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
 After that, reload the rules:
-sudo udevadm control --reload-rules
-sudo udevadm trigger --subsystem-match=input
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger --subsystem-match=input
 If the issue persists, try deleting your existing uinput device and recreating it with:
-sudo modprobe uinput
-Reboot
+    sudo modprobe uinput
+    reboot
