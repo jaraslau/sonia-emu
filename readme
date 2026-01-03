@@ -2,7 +2,7 @@ SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
 
 This is a monorepo.
 For better visibility, install WebUI as a PWA.
-The project is intended to be used on a local network, therefore lacks data validation and other, that would be crucial if to be ran over the internet.
+The project is intended to be used on a local network, therefore lacks data validation and other features, that would be crucial if to be ran over the internet.
 
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
@@ -16,7 +16,7 @@ If the Steam controls are mixed up:
     Enable Steam Input for generic controllers
 
 Running:
-(in an emulator directory (RUN EMULATOR FIRST))
+(in an emulator directory)
 cargo run <optionally - a custom path to a unix socket>
 (in a webui directory)
 Create a venv and install requirements using pip or use poetry, then:
@@ -26,9 +26,10 @@ Installing WebUI as a PWA:
 Safari: "Share button" -> "Add to Home Screen"
 Chrome: "Menu button" -> "Add to Home Screen"
 
-Internal data format:
-Button: "b <id> <state>"
-Joystick: "j <id> <value>"
+Internal data format (as of now):
+b"<char> <int> <int>\n"
+Where the first character represents data type (joystick/button), then data id and value.
+Trigger data is treated as axis data (z-axis), therefore has the same prefix as the joysticks.
 
 In order to fix controls being mixed up in The Binding of Isaac:
 Use any other version of Proton but Experimental.
@@ -44,3 +45,4 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger --subsystem-match=input
 If the issue persists, try deleting your existing uinput device and recreating it with:
 sudo modprobe uinput
+Reboot
