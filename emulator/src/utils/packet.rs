@@ -1,11 +1,10 @@
 #[derive(Debug, Clone, Copy)]
-struct Packet {
-    prefix: u8,
-    input_id: u8,
-    value: i32,
+pub struct Packet {
+    pub prefix: u8,
+    pub input_id: u8,
+    pub value: i32,
 }
 
-#[derive(Debug, Clone, Copy)]
 impl Packet {
     pub fn from_bytes(buf: [u8; 6]) -> Option<Self> {
         match buf[0] {

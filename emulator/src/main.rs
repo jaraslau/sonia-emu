@@ -1,6 +1,6 @@
 use std::{env, error};
 use std::os::unix::net::UnixListener;
-use std::io::{BufRead, Read};
+use std::io::{BufReader, Read};
 
 mod joystick;
 mod utils;
@@ -56,7 +56,7 @@ fn handle_client(
                 if let Some(packet) = utils::packet::Packet::from_bytes(buffer) {
                     match packet.prefix {
                         b'b' => joystick.button_press(button_map(packet.input_id), packet.value != 0)?,
-                        b'j' => joystick.move_axis(axis_map(packet.input_id), packet.value)?;
+                        b'j' => joystick.move_axis(axis_map(packet.input_id), packet.value)?,
                         _ => {}
                     }
                 }

@@ -39,7 +39,7 @@ class InputData:
 async def send_data(data: dict, sock: socket) -> None:
     loop = asyncio.get_running_loop()
     try:
-        input_data = InputData(data["type"], data["id"], data["value"])
+        input_data = InputData(data["type"], int(data["id"]), data["value"])
         packet = input_data.to_bytes()
         await loop.sock_sendall(sock, packet)
     except Exception as e:
