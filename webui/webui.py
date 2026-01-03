@@ -1,6 +1,7 @@
 import asyncio
 import orjson
 import logging
+import struct
 from socket import socket, AF_UNIX, SOCK_STREAM
 from dataclasses import dataclass
 from typing import Literal
@@ -21,26 +22,26 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InputData:
     AXIS_RANGE = 512
-    PREFIX_MAP = {"button": "b", "joystick": "j", "trigger": "j"}
+    PREFIX_MAP = {"button": b"b", "joystick": b"j", "trigger": b"j"}
 
     input_type: Literal["button", "joystick", "trigger"]
     input_id: int
     input_value: float
 
-    def format(self) -> bytes:
+    def to_bytes(self) -> bytes:
         if self.input_type != "button":
-            value = float(self.input_value) * self.AXIS_RANGE
+            value = int(self.input_value * self.AXIS_RANGE)
         else:
-            value = float(self.input_value)
+            value = int(self.input_value)
         prefix = self.PREFIX_MAP[self.input_type]
-        return b"%b %d %d\n" % (prefix.encode("ascii"), int(self.input_id), value)
+        return struct.pack("!BBi", prefix[0], self.input_id, value)
 
 async def send_data(data: dict, sock: socket) -> None:
     loop = asyncio.get_running_loop()
     try:
         input_data = InputData(data["type"], data["id"], data["value"])
-        cmd = input_data.format()
-        await loop.sock_sendall(sock, cmd)
+        packet = input_data.to_bytes()
+        await loop.sock_sendall(sock, packet)
     except Exception as e:
         logger.error(f"An error occurred: {e}")
 
