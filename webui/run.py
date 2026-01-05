@@ -8,8 +8,9 @@ from socket import socket, AF_UNIX, SOCK_STREAM
 import webui
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="[%(asctime)s] %(levelname)s: %(message)s")
+logging.basicConfig(format="%(levelname)s: %(message)s")
 logger.setLevel(logging.INFO)
+
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -49,6 +50,7 @@ def get_args():
     parser.add_argument("--help", action="help", help="show this help message and exit")
     return parser.parse_args()
 
+
 def connect(sock_path: str, reconnect: int, max_tries: int) -> bool:
     for attempt in range(max_tries):
         try:
@@ -70,26 +72,37 @@ def connect(sock_path: str, reconnect: int, max_tries: int) -> bool:
                 return False
     return False
 
+
 def main(args):
     if sys.platform != "linux":
         logger.warning(
-            f"This program was written specifically for Linux. Input events won't work on {sys.platform}."
+            f"This program was written specifically for Linux.\n"
+            f"Input events won't work on {sys.platform}."
         )
     try:
         is_connected = connect(args.socket, args.reconnect, args.max_tries)
         if not is_connected:
+            logger.error(f"Failed to connect to {args.socket}")
             if args.fail:
-                logger.error(f"Failed to connect to {args.socket}. Exiting...")
+                logger.info("Exiting...")
                 return
-            else:
-                logger.warning(f"Failed to connect to {args.socket}. Starting WebUI anyway...")
+            logger.warning("Starting WebUI anyway...")
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
         if args.fail:
             if hasattr(webui, "sock") and webui.sock:
                 webui.sock.close()
             return
-    uvicorn.run("webui:app", port=args.port, host=args.host, loop="uvloop")
+    uvicorn.run(
+        "webui:app",
+        port=args.port,
+        host=args.host,
+        loop="uvloop",
+        http="httptools",
+        access_log=False,
+        use_colors=False,
+    )
+
 
 if __name__ == "__main__":
     args = get_args()
