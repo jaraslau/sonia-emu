@@ -2,8 +2,8 @@
 import time
 import logging
 import sys
-import argparse
 import uvicorn
+from argparse import ArgumentParser, Namespace
 from socket import socket, AF_UNIX, SOCK_STREAM
 import webui
 
@@ -12,8 +12,8 @@ logging.basicConfig(format="%(levelname)s: %(message)s")
 logger.setLevel(logging.INFO)
 
 
-def get_args():
-    parser = argparse.ArgumentParser(
+def get_args() -> Namespace:
+    parser = ArgumentParser(
         description="SoniaEmu WebUI",
         epilog="This software is licensed under MIT license",
         add_help=False,
@@ -73,7 +73,7 @@ def connect(sock_path: str, reconnect: int, max_tries: int) -> bool:
     return False
 
 
-def main(args):
+def main(args: Namespace) -> None:
     if sys.platform != "linux":
         logger.warning(
             f"This program was written specifically for Linux.\n"
