@@ -12,14 +12,14 @@ class AnalogController {
 
   connectWebSocket() {
     this.socket = new WebSocket(`ws://${location.host}/ws`);
-    
-    this.socket.onopen = () => console.log('WebSocket connected');
-    this.socket.onerror = (err) => console.error('WebSocket error:', err);
-    this.socket.onclose = () => console.log('WebSocket closed');
+
+    this.socket.onopen = () => console.log("WebSocket connected");
+    this.socket.onerror = (err) => console.error("WebSocket error:", err);
+    this.socket.onclose = () => console.log("WebSocket closed");
   }
 
   initTriggers() {
-    document.querySelectorAll('.trigger-slider').forEach(slider => {
+    document.querySelectorAll(".trigger-slider").forEach((slider) => {
       const trigger = new TriggerSlider(slider, this);
       this.triggers.push(trigger);
     });
@@ -29,11 +29,11 @@ class AnalogController {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
     } else {
-      fetch('/fallback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }).catch(err => console.error('Fallback error:', err));
+      fetch("/fallback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).catch((err) => console.error("Fallback error:", err));
     }
   }
 }
@@ -41,17 +41,19 @@ class AnalogController {
 class TriggerSlider {
   constructor(element, controller) {
     this.slider = element;
-    this.thumb = element.querySelector('.trigger-thumb');
+    this.thumb = element.querySelector(".trigger-thumb");
     this.id = element.dataset.id;
     this.controller = controller;
     this.touchId = null;
     this.rect = null;
-    
+
     this.attachListeners();
   }
 
   attachListeners() {
-    this.slider.addEventListener('touchstart', (e) => this.start(e), { passive: false });
+    this.slider.addEventListener("touchstart", (e) => this.start(e), {
+      passive: false,
+    });
   }
 
   start(e) {
@@ -61,12 +63,19 @@ class TriggerSlider {
     const touch = e.changedTouches[0];
     this.touchId = touch.identifier;
     this.rect = this.slider.getBoundingClientRect();
-    
+
     this.updatePosition(touch.clientY);
-    
-    document.addEventListener('touchmove', this.moveHandler = (e) => this.move(e), { passive: false });
-    document.addEventListener('touchend', this.endHandler = (e) => this.end(e));
-    document.addEventListener('touchcancel', this.endHandler);
+
+    document.addEventListener(
+      "touchmove",
+      (this.moveHandler = (e) => this.move(e)),
+      { passive: false },
+    );
+    document.addEventListener(
+      "touchend",
+      (this.endHandler = (e) => this.end(e)),
+    );
+    document.addEventListener("touchcancel", this.endHandler);
   }
 
   move(e) {
@@ -85,10 +94,10 @@ class TriggerSlider {
       if (touch.identifier === this.touchId) {
         this.touchId = null;
         this.reset();
-        
-        document.removeEventListener('touchmove', this.moveHandler);
-        document.removeEventListener('touchend', this.endHandler);
-        document.removeEventListener('touchcancel', this.endHandler);
+
+        document.removeEventListener("touchmove", this.moveHandler);
+        document.removeEventListener("touchend", this.endHandler);
+        document.removeEventListener("touchcancel", this.endHandler);
         break;
       }
     }
@@ -98,27 +107,27 @@ class TriggerSlider {
     const offset = this.clamp(clientY - this.rect.top, 0, this.rect.height);
     const pressure = (1 - offset / this.rect.height) * 2 - 1;
     const bottomPos = ((pressure + 1) / 2) * this.rect.height;
-    
+
     this.thumb.style.bottom = `${bottomPos}px`;
     this.controller.send({
-      type: 'trigger',
+      type: "trigger",
       id: this.id,
-      value: pressure
+      value: pressure,
     });
   }
 
   reset() {
-    this.thumb.style.transition = 'bottom 0.2s ease-out';
-    this.thumb.style.bottom = '0px';
-    
+    this.thumb.style.transition = "bottom 0.2s ease-out";
+    this.thumb.style.bottom = "0px";
+
     this.controller.send({
-      type: 'trigger',
+      type: "trigger",
       id: this.id,
-      value: -1
+      value: -1,
     });
 
     setTimeout(() => {
-      this.thumb.style.transition = '';
+      this.thumb.style.transition = "";
     }, 200);
   }
 
@@ -127,6 +136,6 @@ class TriggerSlider {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   new AnalogController();
 });
