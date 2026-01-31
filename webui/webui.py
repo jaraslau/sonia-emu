@@ -3,12 +3,12 @@ import orjson
 import logging
 import struct
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, ClassVar
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import HTMLResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 from utils.socket import Socket
 
 logger = logging.getLogger(__name__)
@@ -38,31 +38,29 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-@dataclass
-class InputData:
-    AXIS_RANGE = 512
-    PREFIX_MAP = {"button": b"b", "joystick": b"j", "trigger": b"j"}
+class InputData(BaseModel):
+    AXIS_RANGE: ClassVar[int] = 512
+    PREFIX_MAP: ClassVar[dict] = {"button": b"b", "joystick": b"j", "trigger": b"j"}
 
-    input_type: Literal["button", "joystick", "trigger"]
-    input_id: int
-    input_value: float
+    type: Literal["button", "joystick", "trigger"]
+    id: int
+    value: float
 
     def to_bytes(self) -> bytes:
-        if self.input_type != "button":
-            value = int(self.input_value * self.AXIS_RANGE)
+        if self.type != "button":
+            val = int(self.value * self.AXIS_RANGE)
         else:
-            value = int(self.input_value)
-        prefix = self.PREFIX_MAP[self.input_type]
-        return struct.pack("!BBi", prefix[0], self.input_id, value)
+            val = int(self.value)
+        prefix = self.PREFIX_MAP[self.type]
+        return struct.pack("!BBi", prefix[0], self.id, val)
 
 
 async def get_sock(request: Request) -> Socket:
     return request.app.state.sock
 
 
-async def send_data(data: dict, sock: Socket) -> None:
+async def send_data(input_data: InputData, sock: Socket) -> None:
     try:
-        input_data = InputData(data["type"], int(data["id"]), data["value"])
         packet = input_data.to_bytes()
         await sock.sendall(packet)
     except Exception as e:
@@ -70,9 +68,8 @@ async def send_data(data: dict, sock: Socket) -> None:
 
 
 @app.post("/fallback")
-async def handle_fetch(request: Request, sock: Socket = Depends(get_sock)):
-    data = await request.json()
-    await send_data(data, sock)
+async def handle_fetch(input_data: InputData, sock: Socket = Depends(get_sock)):
+    await send_data(input_data, sock)
     return {"status": "ok"}
 
 
@@ -84,7 +81,8 @@ async def handle_websocket(websocket: WebSocket):
         while True:
             raw = await websocket.receive_text()
             data = orjson.loads(raw)
-            await send_data(data, sock)
+            input_data = InputData(**data)
+            await send_data(input_data, sock)
     except WebSocketDisconnect:
         logger.warning("Websocket disconnected, running on fallback")
     except Exception as e:
