@@ -8,11 +8,12 @@ from tenacity import (
     retry_if_not_exception_type,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Socket:
     def __init__(self, sock_path: str = "/tmp/sonia-emu.sock"):
         self.sock_path = sock_path
-        self.logger = logging.getLogger(__name__)
 
         self.writer = None
         self.reader = None
@@ -22,12 +23,12 @@ class Socket:
         for i in range(timeout, 0, -1):
             print(f"Reconnecting in {i}s", end="\r", flush=True)
             await asyncio.sleep(1)
-        self.logger.info(f"Trying to reconnect to {self.sock_path}")
+        logger.info(f"Trying to reconnect to {self.sock_path}")
 
     async def _before_sleep(self, rcs: RetryCallState) -> None:
         e = rcs.outcome.exception()
         if e:
-            self.logger.error(
+            logger.error(
                 f"Connection attempt {rcs.attempt_number} to {self.sock_path} failed: {e}"
             )
         await self.close()
@@ -35,7 +36,7 @@ class Socket:
     async def _on_giveup(self, rcs: RetryCallState) -> None:
         e = rcs.outcome.exception()
         if e:
-            self.logger.error(f"Giving up on attempt {rcs.attempt_number}: {e}")
+            logger.error(f"Giving up on attempt {rcs.attempt_number}: {e}")
         await self.close()
 
     async def close(self) -> None:
@@ -44,7 +45,7 @@ class Socket:
                 self.writer.close()
                 await asyncio.wait_for(self.writer.wait_closed(), timeout=2.0)
             except Exception as e:
-                self.logger.error(f"Error closing socket due to: {e}")
+                logger.error(f"Error closing socket due to: {e}")
             finally:
                 self.writer = None
                 self.reader = None
@@ -64,7 +65,7 @@ class Socket:
                 self.reader, self.writer = await asyncio.open_unix_connection(
                     self.sock_path
                 )
-                self.logger.info(f"Connected to {self.sock_path}")
+                logger.info(f"Connected to {self.sock_path}")
 
     async def sendall(self, data: bytes) -> None:
         self.writer.write(data)

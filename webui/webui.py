@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     app.state.sock = Socket(os.getenv("SOCK_PATH"))
     await app.state.sock.connect()
-    if not app.state.sock:
-        logger.warning("Running WebUI anyway...")
+    if not app.state.sock.writer:
+        logger.warning("Starting WebUI anyway...")
     yield
     if app.state.sock:
         await app.state.sock.close()
