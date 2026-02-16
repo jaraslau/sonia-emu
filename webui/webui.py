@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.sock = Socket(os.getenv("SOCK_PATH", "/tmp/sonia-emu.sock"))
     await app.state.sock.connect()
-    if not app.state.sock.writer:
+    if app.state.sock.writer is None:
         logger.warning("Starting WebUI anyway...")
     try:
         yield
