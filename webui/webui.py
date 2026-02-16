@@ -3,7 +3,7 @@ import orjson
 import logging
 import struct
 from contextlib import asynccontextmanager
-from typing import Literal, ClassVar
+from typing import Literal, ClassVar, AsyncGenerator, cast
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import HTMLResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,14 +15,16 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.sock = Socket(os.getenv("SOCK_PATH"))
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    app.state.sock = Socket(os.getenv("SOCK_PATH", "/tmp/sonia-emu.sock"))
     await app.state.sock.connect()
     if not app.state.sock.writer:
         logger.warning("Starting WebUI anyway...")
-    yield
-    if app.state.sock:
-        await app.state.sock.close()
+    try:
+        yield
+    finally:
+        if app.state.sock is not None:
+            await app.state.sock.close()
 
 
 app = FastAPI(
@@ -40,7 +42,11 @@ templates = Jinja2Templates(directory="templates")
 
 class InputData(BaseModel):
     AXIS_RANGE: ClassVar[int] = 512
-    PREFIX_MAP: ClassVar[dict] = {"button": b"b", "joystick": b"j", "trigger": b"j"}
+    PREFIX_MAP: ClassVar[dict[str, bytes]] = {
+        "button": b"b",
+        "joystick": b"j",
+        "trigger": b"j",
+    }
 
     type: Literal["button", "joystick", "trigger"]
     id: int
@@ -56,7 +62,7 @@ class InputData(BaseModel):
 
 
 async def get_sock(request: Request) -> Socket:
-    return request.app.state.sock
+    return cast(Socket, request.app.state.sock)
 
 
 async def send_data(input_data: InputData, sock: Socket) -> None:
@@ -68,13 +74,15 @@ async def send_data(input_data: InputData, sock: Socket) -> None:
 
 
 @app.post("/fallback")
-async def handle_fetch(input_data: InputData, sock: Socket = Depends(get_sock)):
+async def handle_fetch(
+    input_data: InputData, sock: Socket = Depends(get_sock)
+) -> dict[str, str]:
     await send_data(input_data, sock)
     return {"status": "ok"}
 
 
 @app.websocket("/ws")
-async def handle_websocket(websocket: WebSocket):
+async def handle_websocket(websocket: WebSocket) -> None:
     await websocket.accept()
     sock: Socket = websocket.app.state.sock
     try:
@@ -90,5 +98,5 @@ async def handle_websocket(websocket: WebSocket):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request=request, name="index.html")
