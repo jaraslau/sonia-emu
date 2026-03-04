@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class Socket:
+    """asynchronous socket with built-in reconnections"""
+
     def __init__(self, sock_path: str):
         self.sock_path = sock_path
 
