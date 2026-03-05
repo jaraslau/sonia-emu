@@ -1,51 +1,8 @@
-SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
+sonia-emu WebUI demo (non-functional)
 
-This is a monorepo.
-For better visibility, install WebUI as a PWA.
-This project is designed for local network use only and lacks security features necessary for the over-the-internet deployment.
+Non-functional demo.
+No inputs are sent anywhere — joysticks, triggers, and buttons.
+Layout might look weird on big screens!!
 
-While this project is intended to be ran and used only on Linux, WebUI can still be ran on other systems, though nothing will happen obviously.
-
-Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
-https://github.com/gwilymk/arduino-joystick
-
-Running:
-(in emulator/)
-    cargo run <optionally - a custom path to a unix socket>
-(in webui/):
-Create a venv and install requirements using pip or poetry, then:
-    python run.py <optional arguments>
-
-Installing WebUI as a PWA:
-    Safari: "Share button" -> "Add to Home Screen"
-    Chrome: "Menu button" -> "Add to Home Screen"
-
-Data format:
-    Data is being sent as a fixed-size packaged struct with three fields:
-    prefix, input_id and value
-    prefixes are "b" for buttons, and "j" for axes (joysticks and triggers).
-
-Fixes for possible issues:
-1. If the Steam controls are mixed up:
-    Go to steam settings
-    Go to "Controller"
-    Click on "Begin Test" in "Test Device Inputs"
-    Click "Setup Device Inputs"
-    Set your inputs up
-    Enable Steam Input for generic controllers
-
-2. In order to fix controls being mixed up in The Binding of Isaac:
-    Use any other version of Proton but Experimental.
-    Enable Steam Input.
-
-3. If running into issues with launching the emulator (permission denied):
-    Try adding yourself to the input group,
-If this doesn't work, create a custom uinput rule:
-(In "/etc/udev/rules.d/99-uinput.rules"):
-    KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
-After that, reload the rules:
-    sudo udevadm control --reload-rules
-    sudo udevadm trigger --subsystem-match=input
-If the issue persists, try deleting your existing uinput device and recreating it with:
-    sudo modprobe uinput
-    reboot
+Mobile only.
+Designed for touchscreens. Desktop interaction won't work. Open on mobile.

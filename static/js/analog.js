@@ -1,21 +1,11 @@
 class AnalogController {
   constructor() {
-    this.socket = null;
     this.triggers = [];
     this.init();
   }
 
   init() {
-    this.connectWebSocket();
     this.initTriggers();
-  }
-
-  connectWebSocket() {
-    this.socket = new WebSocket(`ws://${location.host}/ws`);
-
-    this.socket.onopen = () => console.log("WebSocket connected");
-    this.socket.onerror = (err) => console.error("WebSocket error:", err);
-    this.socket.onclose = () => console.log("WebSocket closed");
   }
 
   initTriggers() {
@@ -26,15 +16,7 @@ class AnalogController {
   }
 
   send(data) {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
-    } else {
-      fetch("/fallback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).catch((err) => console.error("Fallback error:", err));
-    }
+    console.log("[analog]", data);
   }
 }
 
