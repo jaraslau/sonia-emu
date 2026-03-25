@@ -3,7 +3,7 @@ import orjson
 import logging
 import struct
 from contextlib import asynccontextmanager
-from typing import Literal, ClassVar, AsyncGenerator, cast
+from typing import Literal, ClassVar, AsyncGenerator, Annotated, cast
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import HTMLResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -65,6 +65,9 @@ async def get_sock(request: Request) -> Socket:
     return cast(Socket, request.app.state.sock)
 
 
+SocketDep = Annotated[Socket, Depends(get_sock)]
+
+
 async def send_data(input_data: InputData, sock: Socket) -> None:
     try:
         packet = input_data.to_bytes()
@@ -74,9 +77,7 @@ async def send_data(input_data: InputData, sock: Socket) -> None:
 
 
 @app.post("/fallback")
-async def handle_fetch(
-    input_data: InputData, sock: Socket = Depends(get_sock)
-) -> dict[str, str]:
+async def handle_fetch(input_data: InputData, sock: SocketDep) -> dict[str, str]:
     await send_data(input_data, sock)
     return {"status": "ok"}
 
