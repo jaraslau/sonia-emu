@@ -45,8 +45,20 @@ class AnalogController {
   }
 
   _send(data) {
+    const AXIS_RANGE = 512;
+    const PREFIX = { button: 0x62, joystick: 0x6A, trigger: 0x6A };
+    const val = data.type !== "button"
+      ? Math.round(data.value * AXIS_RANGE)
+      : data.value;
+
+    const buf = new ArrayBuffer(6);
+    const view = new DataView(buf);
+    view.setUint8(0, PREFIX[data.type]);
+    view.setUint8(1, data.id);
+    view.setInt32(2, val, false);
+
     if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
+      this.socket.send(buf);
     } else {
       fetch("/fallback", {
         method: "POST",
