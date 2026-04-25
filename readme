@@ -10,12 +10,12 @@ Rust code for this project is a modified version of "arduino-joystick" project b
 https://github.com/gwilymk/arduino-joystick
 
 Running:
-- Run via Docker (the "input" group has to be set up):
+Run via Docker (the "input" group has to be set up):
     sh gid-setup.sh (or set up manually)
     docker-compose build
     docker-compose up
-
-- Run via 2 separate instances on the host machine:
+OR
+Run via 2 separate instances on the host machine:
     (in emulator/)
         cargo run <optionally - a custom path to a unix socket>
     (in webui/):
@@ -56,7 +56,9 @@ If the issue persists, try deleting your existing uinput device and recreating i
     Enable Steam Input for generic controllers
 
 3. If running into issues with docker (input group not being detected):
-Get the group GID and put it in the docker-compose.yml instead of "input":
+Run "sh gid-setup.sh"
+OR
+Get the group GID and put it in the .env manually:
     getent group input
 
 4. In order to fix controls being mixed up in The Binding of Isaac:
