@@ -7,19 +7,44 @@ on:
     branches: ["main", "dev"]
 
 jobs:
-  lint:
-    name: lint
+  lint-python:
+    name: lint python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: set up python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      
       - name: run ruff check
         run: pipx run ruff check .
-
       - name: run ruff format check
         run: pipx run ruff format --check .
+
+  lint-rust:
+    name: lint rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: cargo fmt
+        run: cargo fmt --check --manifest-path sonia-emu/emulator/Cargo.toml
+      - name: cargo clippy
+        run: cargo clippy --manifest-path sonia-emu/emulator/Cargo.toml -- -D warnings
+
+  lint-js:
+    name: lint js
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+      - name: install prettier
+        run: npm install -g prettier
+      - name: run prettier check
+        run: prettier --check "webui/**/*.{js,html,css}"
