@@ -1,6 +1,6 @@
-use std::{env, error};
-use std::os::unix::net::UnixListener;
 use std::io::{BufReader, Read};
+use std::os::unix::net::UnixListener;
+use std::{env, error};
 
 mod joystick;
 mod utils;
@@ -13,16 +13,16 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     } else {
         "/tmp/sonia-emu.sock"
     };
-    
+
     println!(
         "Created joystick with device path {}",
         joystick.device_path()?.to_string_lossy()
     );
-    
+
     let _ = std::fs::remove_file(path);
     let listener = UnixListener::bind(path)?;
     println!("Listening at {}", path);
-    
+
     loop {
         match listener.accept() {
             Ok((socket, _)) => {
@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             }
         }
     }
-    
+
     Ok(())
 }
 
@@ -49,25 +49,27 @@ fn handle_client(
 ) -> Result<(), Box<dyn error::Error>> {
     let mut buffer = [0u8; 6];
     let mut reader = BufReader::with_capacity(4096, socket);
-    
+
     loop {
         match reader.read_exact(&mut buffer) {
             Ok(_) => {
                 if let Some(packet) = utils::packet::Packet::from_bytes(buffer) {
                     match packet.prefix {
-                        b'b' => joystick.button_press(button_map(packet.input_id), packet.value != 0)?,
+                        b'b' => {
+                            joystick.button_press(button_map(packet.input_id), packet.value != 0)?
+                        }
                         b'j' => joystick.move_axis(axis_map(packet.input_id), packet.value)?,
                         _ => {}
                     }
                 }
             }
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-            Err(e) => return Err(Box::new(e))
+            Err(e) => return Err(Box::new(e)),
         }
-        
+
         joystick.synchronise()?;
     }
-    
+
     Ok(())
 }
 
@@ -101,10 +103,16 @@ const AXIS_MAP: [joystick::Axis; 6] = {
 
 #[inline(always)]
 fn button_map(i: u8) -> joystick::Button {
-    BUTTON_MAP.get(i as usize).copied().unwrap_or(joystick::Button::Guide)
+    BUTTON_MAP
+        .get(i as usize)
+        .copied()
+        .unwrap_or(joystick::Button::Guide)
 }
 
 #[inline(always)]
 fn axis_map(i: u8) -> joystick::Axis {
-    AXIS_MAP.get(i as usize).copied().unwrap_or(joystick::Axis::X)
+    AXIS_MAP
+        .get(i as usize)
+        .copied()
+        .unwrap_or(joystick::Axis::X)
 }

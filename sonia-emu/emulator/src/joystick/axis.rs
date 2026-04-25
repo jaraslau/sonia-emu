@@ -27,14 +27,7 @@ impl Axis {
     }
 
     pub(super) fn all_axes() -> slice::Iter<'static, Self> {
-        const ALL: [Axis; 6] = [
-            Axis::X,
-            Axis::Y,
-            Axis::RX,
-            Axis::RY,
-            Axis::Z,
-            Axis::RZ,
-        ];
+        const ALL: [Axis; 6] = [Axis::X, Axis::Y, Axis::RX, Axis::RY, Axis::Z, Axis::RZ];
         ALL.iter()
     }
 }
