@@ -41,11 +41,13 @@ templates = Jinja2Templates(directory="templates")
 
 
 class InputData(BaseModel):
+    """Data wrapper for parsing JSON on fallback"""
+
     AXIS_RANGE: ClassVar[int] = 512
     PREFIX_MAP: ClassVar[dict[str, bytes]] = {
-        "button": b"b",
-        "joystick": b"j",
-        "trigger": b"j",
+        "button": ord(b"b"),
+        "joystick": ord(b"j"),
+        "trigger": ord(b"j"),
     }
 
     type: Literal["button", "joystick", "trigger"]
@@ -57,8 +59,7 @@ class InputData(BaseModel):
             val = int(self.value * self.AXIS_RANGE)
         else:
             val = int(self.value)
-        prefix = self.PREFIX_MAP[self.type]
-        return struct.pack("!BBi", prefix[0], self.id, val)
+        return struct.pack("!BBi", self.PREFIX_MAP[self.type], self.id, val)
 
 
 async def get_sock(request: Request) -> Socket:
@@ -76,10 +77,10 @@ async def send_data(input_data: InputData, sock: Socket) -> None:
         logger.error(e)
 
 
-@app.post("/fallback")
-async def handle_fetch(input_data: InputData, sock: SocketDep) -> dict[str, str]:
+@app.post("/fallback", status_code=200)
+async def handle_fallback(input_data: InputData, sock: SocketDep) -> dict[str, str]:
     await send_data(input_data, sock)
-    return {"status": "ok"}
+    return {"detail": "sent"}
 
 
 @app.websocket("/ws")
@@ -88,10 +89,8 @@ async def handle_websocket(websocket: WebSocket) -> None:
     sock: Socket = websocket.app.state.sock
     try:
         while True:
-            raw = await websocket.receive_text()
-            data = orjson.loads(raw)
-            input_data = InputData(**data)
-            await send_data(input_data, sock)
+            data = await websocket.receive_bytes()
+            await sock.sendall(data)
     except WebSocketDisconnect:
         logger.warning("Websocket disconnected, running on fallback")
     except Exception as e:

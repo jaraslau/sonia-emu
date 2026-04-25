@@ -2,6 +2,8 @@ class AnalogController {
   constructor() {
     this.socket = null;
     this.triggers = [];
+    this.pending = new Map();
+    this.flushPending = false;
     this.init();
   }
 
@@ -12,22 +14,50 @@ class AnalogController {
 
   connectWebSocket() {
     this.socket = new WebSocket(`ws://${location.host}/ws`);
-
     this.socket.onopen = () => console.log("WebSocket connected");
     this.socket.onerror = (err) => console.error("WebSocket error:", err);
-    this.socket.onclose = () => console.log("WebSocket closed");
+    this.socket.onclose = () => {
+      console.log("WebSocket closed, reconnecting in 2s...");
+      setTimeout(() => this.connectWebSocket(), 2000);
+    };
   }
 
   initTriggers() {
     document.querySelectorAll(".trigger-slider").forEach((slider) => {
-      const trigger = new TriggerSlider(slider, this);
-      this.triggers.push(trigger);
+      this.triggers.push(new TriggerSlider(slider, this));
     });
   }
 
   send(data) {
+    this.pending.set(`${data.type}:${data.id}`, data);
+    if (!this.flushPending) {
+      this.flushPending = true;
+      queueMicrotask(() => this.flush());
+    }
+  }
+
+  flush() {
+    this.flushPending = false;
+    for (const data of this.pending.values()) {
+      this._send(data);
+    }
+    this.pending.clear();
+  }
+
+  _send(data) {
+    const AXIS_RANGE = 512;
+    const PREFIX = { button: 0x62, joystick: 0x6a, trigger: 0x6a };
+    const val =
+      data.type !== "button" ? Math.round(data.value * AXIS_RANGE) : data.value;
+
+    const buf = new ArrayBuffer(6);
+    const view = new DataView(buf);
+    view.setUint8(0, PREFIX[data.type]);
+    view.setUint8(1, data.id);
+    view.setInt32(2, val, false);
+
     if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
+      this.socket.send(buf);
     } else {
       fetch("/fallback", {
         method: "POST",
@@ -42,7 +72,7 @@ class TriggerSlider {
   constructor(element, controller) {
     this.slider = element;
     this.thumb = element.querySelector(".trigger-thumb");
-    this.id = element.dataset.id;
+    this.id = parseInt(element.dataset.id, 10);
     this.controller = controller;
     this.touchId = null;
     this.rect = null;
@@ -58,12 +88,10 @@ class TriggerSlider {
 
   start(e) {
     if (this.touchId !== null) return;
-
     e.preventDefault();
     const touch = e.changedTouches[0];
     this.touchId = touch.identifier;
     this.rect = this.slider.getBoundingClientRect();
-
     this.updatePosition(touch.clientY);
 
     document.addEventListener(
@@ -80,7 +108,6 @@ class TriggerSlider {
 
   move(e) {
     if (this.touchId === null) return;
-
     for (const touch of e.changedTouches) {
       if (touch.identifier === this.touchId) {
         this.updatePosition(touch.clientY);
@@ -94,7 +121,6 @@ class TriggerSlider {
       if (touch.identifier === this.touchId) {
         this.touchId = null;
         this.reset();
-
         document.removeEventListener("touchmove", this.moveHandler);
         document.removeEventListener("touchend", this.endHandler);
         document.removeEventListener("touchcancel", this.endHandler);
@@ -109,23 +135,13 @@ class TriggerSlider {
     const bottomPos = ((pressure + 1) / 2) * this.rect.height;
 
     this.thumb.style.bottom = `${bottomPos}px`;
-    this.controller.send({
-      type: "trigger",
-      id: this.id,
-      value: pressure,
-    });
+    this.controller.send({ type: "trigger", id: this.id, value: pressure });
   }
 
   reset() {
     this.thumb.style.transition = "bottom 0.2s ease-out";
     this.thumb.style.bottom = "0px";
-
-    this.controller.send({
-      type: "trigger",
-      id: this.id,
-      value: -1,
-    });
-
+    this.controller.send({ type: "trigger", id: this.id, value: -1 });
     setTimeout(() => {
       this.thumb.style.transition = "";
     }, 200);

@@ -10,11 +10,17 @@ Rust code for this project is a modified version of "arduino-joystick" project b
 https://github.com/gwilymk/arduino-joystick
 
 Running:
-(in emulator/)
-    cargo run <optionally - a custom path to a unix socket>
-(in webui/):
-Create a venv and install requirements using pip or poetry, then:
-    python run.py <optional arguments>
+- Run via Docker (the "input" group has to be set up):
+    sh gid-setup.sh (or set up manually)
+    docker-compose build
+    docker-compose up
+
+- Run via 2 separate instances on the host machine:
+    (in emulator/)
+        cargo run <optionally - a custom path to a unix socket>
+    (in webui/):
+    Create a venv and install requirements using pip or poetry, then:
+        python run.py <optional arguments>
 
 Installing WebUI as a PWA:
     Safari: "Share button" -> "Add to Home Screen"
@@ -29,19 +35,7 @@ Data format:
     prefixes are "b" for buttons, and "j" for axes (joysticks and triggers).
 
 Fixes for possible issues:
-1. If the Steam controls are mixed up:
-    Go to steam settings
-    Go to "Controller"
-    Click on "Begin Test" in "Test Device Inputs"
-    Click "Setup Device Inputs"
-    Set your inputs up
-    Enable Steam Input for generic controllers
-
-2. In order to fix controls being mixed up in The Binding of Isaac:
-    Use any other version of Proton but Experimental.
-    Enable Steam Input.
-
-3. If running into issues with launching the emulator (permission denied):
+1. If running into issues with launching the emulator (permission denied):
     Try adding yourself to the input group,
 If this doesn't work, create a custom uinput rule:
 (In "/etc/udev/rules.d/99-uinput.rules"):
@@ -52,3 +46,19 @@ After that, reload the rules:
 If the issue persists, try deleting your existing uinput device and recreating it with:
     sudo modprobe uinput
     reboot
+
+2. If Steam controls are mixed up:
+    Go to steam settings
+    Go to "Controller"
+    Click on "Begin Test" in "Test Device Inputs"
+    Click "Setup Device Inputs"
+    Set your inputs up
+    Enable Steam Input for generic controllers
+
+3. If running into issues with docker (input group not being detected):
+Get the group GID and put it in the docker-compose.yml instead of "input":
+    getent group input
+
+4. In order to fix controls being mixed up in The Binding of Isaac:
+    Use any other version of Proton but Experimental.
+    Enable Steam Input.
