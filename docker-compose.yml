@@ -1,0 +1,31 @@
+services:
+  emu:
+    build:
+      context: ./emulator
+      dockerfile: dockerfile.emulator
+    command: ${SOCK_PATH}
+    devices:
+      - /dev/uinput:/dev/uinput
+    volumes:
+      - socket:${SOCK_DIR}
+    group_add:
+      - input
+    env_file: .env
+    restart: unless-stopped
+
+  webui:
+    build:
+      context: ./webui
+      dockerfile: dockerfile.webui
+    command: uvicorn webui:app --host 0.0.0.0 --port ${WEBUI_PORT}
+    ports:
+      - "${WEBUI_PORT}:${WEBUI_PORT}"
+    volumes:
+      - socket:${SOCK_DIR}
+    env_file: .env
+    depends_on:
+      - emu
+    restart: unless-stopped
+
+volumes:
+  socket:

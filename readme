@@ -10,11 +10,16 @@ Rust code for this project is a modified version of "arduino-joystick" project b
 https://github.com/gwilymk/arduino-joystick
 
 Running:
-(in emulator/)
-    cargo run <optionally - a custom path to a unix socket>
-(in webui/):
-Create a venv and install requirements using pip or poetry, then:
-    python run.py <optional arguments>
+- Run via Docker (the "input" group has to be set up):
+    docker-compose build
+    docker-compose up
+
+- Run via 2 separate instances on the host machine:
+    (in emulator/)
+        cargo run <optionally - a custom path to a unix socket>
+    (in webui/):
+    Create a venv and install requirements using pip or poetry, then:
+        python run.py <optional arguments>
 
 Installing WebUI as a PWA:
     Safari: "Share button" -> "Add to Home Screen"

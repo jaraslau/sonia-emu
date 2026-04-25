@@ -3,7 +3,8 @@
 .gitattributes
 
 docker-compose.yml
-Dockerfile
+dockerfile.webui
+dockerfile.emulator
 .docker
 .dockerignore
 
