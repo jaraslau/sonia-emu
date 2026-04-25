@@ -1,7 +1,7 @@
 services:
   emu:
     build:
-      context: ./emulator
+      context: .
       dockerfile: dockerfile.emulator
     command: ${SOCK_PATH}
     devices:
@@ -15,7 +15,7 @@ services:
 
   webui:
     build:
-      context: ./webui
+      context: .
       dockerfile: dockerfile.webui
     command: uvicorn webui:app --host 0.0.0.0 --port ${WEBUI_PORT}
     ports:
