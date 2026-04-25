@@ -47,4 +47,4 @@ jobs:
       - name: install prettier
         run: npm install -g prettier
       - name: run prettier check
-        run: prettier --check "webui/**/*.{js,html,css}"
+        run: prettier --check "sonia-emu/webui/**/*.{js,html,css}"

@@ -28,7 +28,7 @@ pub enum Button {
 
 impl Button {
     #[inline]
-    pub(super) fn to_evdev_button(&self) -> input_linux::Key {
+    pub(super) fn to_evdev_button(self) -> input_linux::Key {
         use input_linux::Key::*;
         use Button::*;
 
