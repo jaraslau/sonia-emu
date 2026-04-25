@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM rust:1-slim AS builder
 
 WORKDIR /app
@@ -6,8 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-COPY emulator/Cargo.toml emulator/Cargo.lock ./
-COPY emulator/src ./src
+COPY sonia-emu/emulator/Cargo.toml sonia-emu/emulator/Cargo.lock ./
+
+COPY sonia-emu/emulator/src ./src
 
 RUN cargo build --release
 
@@ -19,7 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r emu && useradd -r -g emu emu
+ARG INPUT_GID
+RUN groupadd -g ${INPUT_GID} input && \
+    groupadd -r emu && \
+    useradd -r -g emu -G input emu
 
 COPY --from=builder --chown=emu:emu /app/target/release/sonia-emu .
 

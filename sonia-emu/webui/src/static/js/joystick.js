@@ -30,10 +30,15 @@ class GameController {
     ];
 
     configs.forEach((config) => {
-      const container = document.getElementById(`${config.id}-joystick-container`);
+      const container = document.getElementById(
+        `${config.id}-joystick-container`,
+      );
       const stick = document.getElementById(`${config.id}-joystick`);
       if (!container || !stick) return;
-      this.joysticks.set(config.id, new Joystick(container, stick, config, this));
+      this.joysticks.set(
+        config.id,
+        new Joystick(container, stick, config, this),
+      );
     });
   }
 
@@ -49,7 +54,11 @@ class GameController {
 
       btn.addEventListener("touchend", (e) => {
         e.preventDefault();
-        this.send({ type: isTrigger ? "trigger" : "button", id, value: isTrigger ? -1 : 0 });
+        this.send({
+          type: isTrigger ? "trigger" : "button",
+          id,
+          value: isTrigger ? -1 : 0,
+        });
       });
     });
   }
@@ -72,10 +81,9 @@ class GameController {
 
   _send(data) {
     const AXIS_RANGE = 512;
-    const PREFIX = { button: 0x62, joystick: 0x6A, trigger: 0x6A };
-    const val = data.type !== "button"
-      ? Math.round(data.value * AXIS_RANGE)
-      : data.value;
+    const PREFIX = { button: 0x62, joystick: 0x6a, trigger: 0x6a };
+    const val =
+      data.type !== "button" ? Math.round(data.value * AXIS_RANGE) : data.value;
 
     const buf = new ArrayBuffer(6);
     const view = new DataView(buf);
@@ -123,8 +131,12 @@ class Joystick {
     const stickRadius = this.stick.offsetWidth / 2;
     this.maxDistance = containerRadius - stickRadius;
 
-    this.container.addEventListener("touchstart", (e) => this.start(e), { passive: false });
-    this.container.addEventListener("touchmove", (e) => this.move(e), { passive: false });
+    this.container.addEventListener("touchstart", (e) => this.start(e), {
+      passive: false,
+    });
+    this.container.addEventListener("touchmove", (e) => this.move(e), {
+      passive: false,
+    });
     document.addEventListener("touchend", (e) => this.end(e));
     document.addEventListener("touchcancel", (e) => this.end(e));
   }
@@ -146,15 +158,26 @@ class Joystick {
     const deltaX = touch.clientX - (rect.left + rect.width / 2);
     const deltaY = touch.clientY - (rect.top + rect.height / 2);
 
-    const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), this.maxDistance);
+    const distance = Math.min(
+      Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+      this.maxDistance,
+    );
     const angle = Math.atan2(deltaY, deltaX);
     const offsetX = Math.cos(angle) * distance;
     const offsetY = Math.sin(angle) * distance;
 
     this.stick.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
 
-    this.controller.send({ type: "joystick", id: this.config.xId, value: offsetX / this.maxDistance });
-    this.controller.send({ type: "joystick", id: this.config.yId, value: offsetY / this.maxDistance });
+    this.controller.send({
+      type: "joystick",
+      id: this.config.xId,
+      value: offsetX / this.maxDistance,
+    });
+    this.controller.send({
+      type: "joystick",
+      id: this.config.yId,
+      value: offsetY / this.maxDistance,
+    });
   }
 
   end(e) {
@@ -170,8 +193,12 @@ class Joystick {
   findTouch(touches) {
     const rect = this.container.getBoundingClientRect();
     for (let touch of touches) {
-      if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
-          touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+      if (
+        touch.clientX >= rect.left &&
+        touch.clientX <= rect.right &&
+        touch.clientY >= rect.top &&
+        touch.clientY <= rect.bottom
+      ) {
         return touch;
       }
     }

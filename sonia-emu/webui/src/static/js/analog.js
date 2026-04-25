@@ -46,10 +46,9 @@ class AnalogController {
 
   _send(data) {
     const AXIS_RANGE = 512;
-    const PREFIX = { button: 0x62, joystick: 0x6A, trigger: 0x6A };
-    const val = data.type !== "button"
-      ? Math.round(data.value * AXIS_RANGE)
-      : data.value;
+    const PREFIX = { button: 0x62, joystick: 0x6a, trigger: 0x6a };
+    const val =
+      data.type !== "button" ? Math.round(data.value * AXIS_RANGE) : data.value;
 
     const buf = new ArrayBuffer(6);
     const view = new DataView(buf);
@@ -82,7 +81,9 @@ class TriggerSlider {
   }
 
   attachListeners() {
-    this.slider.addEventListener("touchstart", (e) => this.start(e), { passive: false });
+    this.slider.addEventListener("touchstart", (e) => this.start(e), {
+      passive: false,
+    });
   }
 
   start(e) {
@@ -93,8 +94,15 @@ class TriggerSlider {
     this.rect = this.slider.getBoundingClientRect();
     this.updatePosition(touch.clientY);
 
-    document.addEventListener("touchmove", (this.moveHandler = (e) => this.move(e)), { passive: false });
-    document.addEventListener("touchend", (this.endHandler = (e) => this.end(e)));
+    document.addEventListener(
+      "touchmove",
+      (this.moveHandler = (e) => this.move(e)),
+      { passive: false },
+    );
+    document.addEventListener(
+      "touchend",
+      (this.endHandler = (e) => this.end(e)),
+    );
     document.addEventListener("touchcancel", this.endHandler);
   }
 
@@ -134,7 +142,9 @@ class TriggerSlider {
     this.thumb.style.transition = "bottom 0.2s ease-out";
     this.thumb.style.bottom = "0px";
     this.controller.send({ type: "trigger", id: this.id, value: -1 });
-    setTimeout(() => { this.thumb.style.transition = ""; }, 200);
+    setTimeout(() => {
+      this.thumb.style.transition = "";
+    }, 200);
   }
 
   clamp(value, min, max) {
