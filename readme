@@ -1,16 +1,17 @@
 SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
 
-This is a monorepo.
-For better visibility, install WebUI as a PWA.
-This project is designed for local network use only and lacks security features necessary for the over-the-internet deployment.
+This is a monorepo for both emulator and web UI.
+For better visibility, install web UI as a PWA.
+This project is designed for local network use only and lacks security features necessary for over-the-internet deployment.
 
-While this project is intended to be ran and used only on Linux, WebUI can still be ran on other systems, though nothing will happen obviously.
+While this project is intended to be ran and used only on Linux, web UI can still be ran on other systems, though nothing will happen obviously.
+Emulator registers a virtual controller and sends events to it, so it should work as a real, detectable gamepad.
 
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
 
 Running:
-Run via Docker (the "input" group has to be set up):
+Run via Docker ("input" group has to be set up):
     sh gid-setup.sh (or set up manually)
     docker-compose build
     docker-compose up
@@ -18,15 +19,15 @@ OR
 Run via 2 separate instances on the host machine:
     (in emulator/)
         cargo run <optionally - a custom path to a unix socket>
-    (in webui/):
+    (in webui/src):
     Create a venv and install requirements using pip or poetry, then:
         python run.py <optional arguments>
 
-Installing WebUI as a PWA:
+Installing web UI as a PWA:
     Safari: "Share button" -> "Add to Home Screen"
     Chrome: "Menu button" -> "Add to Home Screen"
 
-Demo:
+Demo (where you see how web UI looks):
 https://jarasiau.github.io/sonia-emu/ 
 
 Data format:
@@ -43,7 +44,7 @@ If this doesn't work, create a custom uinput rule:
 After that, reload the rules:
     sudo udevadm control --reload-rules
     sudo udevadm trigger --subsystem-match=input
-If the issue persists, try deleting your existing uinput device and recreating it with:
+If the issue persists and you've tried everything above, you can try deleting your existing uinput device and recreating it with:
     sudo modprobe uinput
     reboot
 
