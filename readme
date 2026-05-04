@@ -28,7 +28,7 @@ Installing web UI as a PWA:
     Chrome: "Menu button" -> "Add to Home Screen"
 
 Demo (where you see how web UI looks):
-https://jarasiau.github.io/sonia-emu/ 
+https://jaraslau.github.io/sonia-emu/ 
 
 Data format:
     Data is being sent as a fixed-size packaged struct with three fields:
