@@ -25,18 +25,12 @@ impl Joystick {
 
     #[inline]
     pub fn move_axis(&self, axis: Axis, position: i32) -> io::Result<()> {
-        if !(-512..=512).contains(&position) {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("axis position {position} outside -512..=512"),
-            ));
-        }
+        let position = position.clamp(-512, 512);
 
-        self.write_event(input_linux::AbsoluteEvent::new(
-            EVENT_TIME,
-            axis.to_evdev_axis(),
-            position,
-        ))
+        self.write_events(&[
+            input_linux::AbsoluteEvent::new(EVENT_TIME, axis.to_evdev_axis(), position).as_ref(),
+            SYNC_EVENT,
+        ])
     }
 
     #[inline]
@@ -47,26 +41,21 @@ impl Joystick {
             input_linux::KeyState::RELEASED
         };
 
-        self.write_event(input_linux::KeyEvent::new(
-            EVENT_TIME,
-            button.to_evdev_button(),
-            value,
-        ))
-    }
-
-    #[inline]
-    pub fn synchronise(&self) -> io::Result<()> {
-        self.write_event(input_linux::SynchronizeEvent::report(EVENT_TIME))
+        self.write_events(&[
+            input_linux::KeyEvent::new(EVENT_TIME, button.to_evdev_button(), value).as_ref(),
+            SYNC_EVENT,
+        ])
     }
 
     #[inline(always)]
-    fn write_event(&self, event: impl std::convert::AsRef<sys::input_event>) -> io::Result<()> {
-        self.device.write(&[*event.as_ref()])?;
+    fn write_events<const N: usize>(&self, events: &[sys::input_event; N]) -> io::Result<()> {
+        self.device.write(events)?;
         Ok(())
     }
 }
 
 const EVENT_TIME: input_linux::EventTime = input_linux::EventTime::new(0, 0);
+const SYNC_EVENT: sys::input_event = input_linux::SynchronizeEvent::report(EVENT_TIME).as_ref();
 
 fn create_joystick_device() -> io::Result<input_linux::UInputHandle<fs::File>> {
     let uinput_file = fs::File::create("/dev/uinput")?;

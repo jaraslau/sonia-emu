@@ -22,6 +22,8 @@ from utils.socket import Socket
 
 logger = logging.getLogger(__name__)
 
+_PACKET = struct.Struct("!BBi")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -66,7 +68,7 @@ class InputData(BaseModel):
             val = int(self.value * self.AXIS_RANGE)
         else:
             val = int(self.value)
-        return struct.pack("!BBi", self.PREFIX_MAP[self.type], self.id, val)
+        return _PACKET.pack(self.PREFIX_MAP[self.type], self.id, val)
 
 
 async def get_sock(request: Request) -> Socket:
