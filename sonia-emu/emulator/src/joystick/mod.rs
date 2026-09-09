@@ -28,8 +28,8 @@ impl Joystick {
         let position = position.clamp(-512, 512);
 
         self.write_events(&[
-            input_linux::AbsoluteEvent::new(EVENT_TIME, axis.to_evdev_axis(), position).as_ref(),
-            SYNC_EVENT,
+            *input_linux::AbsoluteEvent::new(EVENT_TIME, axis.to_evdev_axis(), position).as_ref(),
+            *SYNC_EVENT.as_ref(),
         ])
     }
 
@@ -42,8 +42,8 @@ impl Joystick {
         };
 
         self.write_events(&[
-            input_linux::KeyEvent::new(EVENT_TIME, button.to_evdev_button(), value).as_ref(),
-            SYNC_EVENT,
+            *input_linux::KeyEvent::new(EVENT_TIME, button.to_evdev_button(), value).as_ref(),
+            *SYNC_EVENT.as_ref(),
         ])
     }
 
@@ -55,7 +55,7 @@ impl Joystick {
 }
 
 const EVENT_TIME: input_linux::EventTime = input_linux::EventTime::new(0, 0);
-const SYNC_EVENT: sys::input_event = input_linux::SynchronizeEvent::report(EVENT_TIME).as_ref();
+const SYNC_EVENT: input_linux::SynchronizeEvent = input_linux::SynchronizeEvent::report(EVENT_TIME);
 
 fn create_joystick_device() -> io::Result<input_linux::UInputHandle<fs::File>> {
     let uinput_file = fs::File::create("/dev/uinput")?;
