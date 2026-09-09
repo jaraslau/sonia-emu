@@ -41,7 +41,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     Ok(())
 }
 
-#[inline]
 fn handle_client(
     socket: std::os::unix::net::UnixStream,
     joystick: &joystick::Joystick,
@@ -53,26 +52,18 @@ fn handle_client(
         match reader.read_exact(&mut buffer) {
             Ok(_) => {
                 let value = i32::from_be_bytes([buffer[2], buffer[3], buffer[4], buffer[5]]);
-                let handled = match buffer[0] {
-                    b'b' => match BUTTON_MAP.get(buffer[1] as usize).copied() {
-                        Some(button) => {
+                match buffer[0] {
+                    b'b' => {
+                        if let Some(button) = BUTTON_MAP.get(buffer[1] as usize).copied() {
                             joystick.button_press(button, value != 0)?;
-                            true
                         }
-                        None => false,
-                    },
-                    b'j' => match AXIS_MAP.get(buffer[1] as usize).copied() {
-                        Some(axis) => {
+                    }
+                    b'j' => {
+                        if let Some(axis) = AXIS_MAP.get(buffer[1] as usize).copied() {
                             joystick.move_axis(axis, value)?;
-                            true
                         }
-                        None => false,
-                    },
-                    _ => false,
-                };
-
-                if handled {
-                    joystick.synchronise()?;
+                    }
+                    _ => {}
                 }
             }
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,

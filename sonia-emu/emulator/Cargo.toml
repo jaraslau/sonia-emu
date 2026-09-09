@@ -6,3 +6,8 @@ edition = "2021"
 
 [dependencies]
 input-linux = "0.7.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
