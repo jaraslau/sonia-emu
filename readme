@@ -1,8 +1,8 @@
-sonia-emu WebUI demo (non-functional)
+sonia-emu
 
-Non-functional demo.
-No inputs are sent anywhere — joysticks, triggers, and buttons.
-Layout might look weird on big screens!!
+Gamepad emulator in the browser.
 
-Mobile only.
-Designed for touchscreens. Desktop interaction won't work. Open on mobile.
+A showcase page for the project — see the demo video on the site.
+
+The emulator is a Rust binary that talks to the WebUI over a Unix socket;
+this repository holds the WebUI frontend only.
