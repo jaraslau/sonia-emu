@@ -1,5 +1,7 @@
 SoniaEmu - emulate gamepad input on Linux using a mobile device (POC).
 
+This project is being archived, because I'm working on a new one.
+
 This is a monorepo for both emulator and web UI.
 For better visibility, install web UI as a PWA.
 This project is designed for local network use only and lacks security features necessary for over-the-internet deployment.
