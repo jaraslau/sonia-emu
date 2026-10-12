@@ -7,6 +7,9 @@ This project is designed for local network use only and lacks security features 
 While this project is intended to be ran and used only on Linux, web UI can still be ran on other systems, though nothing will happen obviously.
 Emulator registers a virtual controller and sends events to it, so it should work as a real, detectable gamepad.
 
+Take a look at a demo at:
+https://jaraslau.github.io/sonia-emu/
+
 Rust code for this project is a modified version of "arduino-joystick" project by gwilymk:
 https://github.com/gwilymk/arduino-joystick
 
@@ -24,9 +27,6 @@ Installing web UI as a PWA:
     Chrome: "Menu button" -> "Add to Home Screen"
 
 Fun fact: First version was written using Flask.
-
-Demo (where you see how web UI looks):
-https://jaraslau.github.io/sonia-emu/ 
 
 Data format:
     Data is being sent as a fixed-size packaged struct with three fields:
